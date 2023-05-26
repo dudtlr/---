@@ -491,7 +491,7 @@ void EraseBullet(int i) {
 	
 }
 
-//총알 움직임
+//총알 움직임 
 void bulletmove() {
 	int i;
 
@@ -511,7 +511,7 @@ void bulletmove() {
 }
 
 // 우선 게임을 진행이 되면 우리는 계속 키보드를 활용할 것이니 while문을 통해 구현해보자
-
+//게임 메인 화면
 void gamestart() {
 	unsigned char ch;
 	int i;
