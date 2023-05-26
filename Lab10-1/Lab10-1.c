@@ -26,8 +26,8 @@
 #define YELLOW2	14
 #define WHITE	15
 
-#define WIDTH 150
-#define HEIGHT 35
+#define WIDTH 148
+#define HEIGHT 34
 
 #define ESC 0x1b //  ESC 누르면 종료
 
@@ -39,6 +39,31 @@
 #define LEFT 0x4b
 #define RIGHT 0x4d
 #define ENTER '\r'
+#define SPACE 0x20
+
+int Delay = 10;
+int frame_count = 0; // game 진행 frame count 로 속도 조절용으로 사용된다.
+int p1_frame_sync = 4; //플레이어의 이동속도
+
+
+#define UX 72  //시작 유저의 x좌표
+#define UY 30  //시작 유저의 y좌표
+
+static int called = 0;
+
+static int oldx = UX, oldy = UY; // 플레이어의 old 좌표
+static int newx = UX, newy = UY; //플레이어의 new 좌표
+static int keep_moving = 1;  //1:계속이동
+
+#define MAXBULLET 100//플레이어의 최대 총알 수
+#define TRUE 1
+#define FALSE 0
+
+struct {
+	int exist;
+	int x, y;
+}Bullet[MAXBULLET];
+
 #define SPACE 0x20
 
 void gotoxy(int x, int y) //내가 원하는 위치로 커서 이동
@@ -197,12 +222,12 @@ void IntroPage() {
 		for (i = 0; i <= 20; i++) {
 			Sleep(20);
 			//draw_box2(i * 2, i, 78 - i * 2, 22 - i, "□");
-			draw_box2(i * 2, i, WIDTH - i * 2, HEIGHT - 2 - i, "★");
+			draw_box2(i * 2, i, WIDTH  - i * 2, HEIGHT - 2 - i, "★");
 		}
 
 		for (i = 20; i >= 0; i--) {
 			Sleep(20);
-			draw_box2(i * 2, i, WIDTH - i * 2, HEIGHT - 2 - i, "  ");
+			draw_box2(i * 2, i, WIDTH  - i * 2, HEIGHT - 2 - i, "  ");
 		}
 		cls(WHITE, BLACK);
 		break;
@@ -385,6 +410,153 @@ void introducePage() {
 
 }
 
+void init_game() {
+	//나중에 게임이 종료되고 게임이 다시 시작될 때
+	//변수 값들을 초기화 해주는 영역
+	
+	system("cls");  //게임이 시작되면 초기화면을 사라지게함
+	removeCursor();
+}
+
+void playerdraw(int x, int y) {
+	textcolor(GREEN1, BLACK);
+	gotoxy(x, y);
+	printf("<=★=>");
+}
+
+void playererase(int x, int y) {
+	gotoxy(x, y);
+	printf("      ");
+}
+
+
+void player1(unsigned char ch) {
+
+	int move_flag = 0; //플레이어의 움직임 여부를 나타내는 변수
+	static unsigned char last_ch = 0;
+
+
+	if (called == 0) {
+		removeCursor();
+		playerdraw(oldx, oldy);
+		called = 1;
+	}
+	if (keep_moving && ch == 0)
+		ch = last_ch;
+	last_ch = ch;
+
+	switch (ch) {
+	case UP:
+		if (oldy > 0)
+			newy = oldy - 1;
+		move_flag = 1;
+		break;
+	case DOWN:
+		if (oldy < HEIGHT - 3)
+			newy = oldy + 1;
+		move_flag = 1;
+		break;
+
+	case LEFT:
+		if (oldx > 2)
+			newx = oldx - 1;
+		move_flag = 1;
+		break;
+	case RIGHT:
+		if (oldx < WIDTH - 6)
+			newx = oldx + 1;
+		move_flag = 1;
+		break;
+
+	}
+	if (move_flag) {
+		playererase(oldx, oldy);
+		playerdraw(newx, newy); // 새로운 위치에서 플레이어 표시
+		oldx = newx; // 마지막 위치를 기억한다.
+		oldy = newy;
+
+	}
+}
+
+void DrawBullet(int i) {
+	textcolor(GREEN1, BLACK);
+	gotoxy(Bullet[i].x, Bullet[i].y); printf("│");
+	
+
+	
+}
+void EraseBullet(int i) {
+	gotoxy(Bullet[i].x, Bullet[i].y); printf("  ");
+	
+}
+
+void bulletmove() {
+	int i;
+
+	for (i = 0; i < MAXBULLET; i++) {
+		if (Bullet[i].exist == TRUE) {
+			EraseBullet(i);
+			if (Bullet[i].y == 0) {
+				Bullet[i].exist = FALSE;
+			}
+			else {
+				Bullet[i].y--;
+				DrawBullet(i);
+			}
+		}
+	}
+	Sleep(30);
+}
+
+// 우선 게임을 진행이 되면 우리는 계속 키보드를 활용할 것이니 while문을 통해 구현해보자
+
+void gamestart() {
+	unsigned char ch;
+	int i;
+	init_game();
+	playerdraw(oldx, oldy);
+		while (1) {
+			if (kbhit() == 1) {
+				ch = getch();
+				if (ch == SPECIAL1 || ch == SPECIAL2) {
+					ch = getch();
+					switch (ch) {
+					case UP: case DOWN: case LEFT: case RIGHT:
+						player1(ch);
+						if (frame_count % p1_frame_sync == 0)
+							player1(0);
+						break;
+					default:
+						if (frame_count % p1_frame_sync == 0)
+							player1(0);
+					}
+				}
+				if (ch == SPACE) {
+					for (i = 0; i < MAXBULLET && Bullet[i].exist == TRUE; i++) {
+						//DrawBullet(i); // 수정: 총알을 화면에 그림
+					}
+					if (i != MAXBULLET) {
+						Bullet[i].x = newx + 1;
+						Bullet[i].y = newy - 1;
+						Bullet[i].exist = TRUE;
+					}
+				}
+			}
+			else {
+				//플레이어 무브 속도조절 함수
+			}
+			//총알 속도조절 함수
+			bulletmove();
+			Sleep(Delay); // Delay 값을 줄이고
+			frame_count++;// frame_count 값으로 속도 조절을 한다.
+		}
+}
+
+
+
+
+
+
 void main()
 {
 	// 난이도 창 + 비행기 설정 창 만들어야한다. 하지만 일단 게임 화면부터 먼저 만들자!!
@@ -392,7 +564,7 @@ void main()
 	//cls(BLACK, WHITE);
 	cls(WHITE, BLACK);
 	centerConsoleWindow();
-	system("mode con cols=150 lines=35 | title 1891093 전영식 슈팅게임"); // 콘솔창 크기 및 제목 설정
+	system("mode con cols=150 lines=34 | title 1891093 전영식 슈팅게임"); // 콘솔창 크기 및 제목 설정
 	int i, x, y;
 	char buf[100];
 	system("cls");   //화면 지우기
@@ -404,19 +576,15 @@ void main()
 	bool isFinish = false;
 	bool isGameRunning = false;  // 게임 실행 여부를 나타내는 부울 변수
 	IntroPage();
+
+	
 		
 	while (isFinish == false) {
 		if (isGameRunning) {
 			// 게임 실행 중인 경우
-			IntroPage();  // 예시로 첫 번째 게임 화면 호출
+			
+			gamestart();
 		
-
-
-
-
-
-
-
 		
 			
 		}
@@ -440,7 +608,7 @@ void main()
 		}
 	}
 
-
+	
 	
 
 
