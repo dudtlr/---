@@ -477,7 +477,7 @@ void player1(unsigned char ch) {
 
 	}
 }
-
+//총알 그리기
 void DrawBullet(int i) {
 	textcolor(GREEN1, BLACK);
 	gotoxy(Bullet[i].x, Bullet[i].y); printf("│");
@@ -485,11 +485,13 @@ void DrawBullet(int i) {
 
 	
 }
+//총알 지우기
 void EraseBullet(int i) {
 	gotoxy(Bullet[i].x, Bullet[i].y); printf("  ");
 	
 }
 
+//총알 움직임
 void bulletmove() {
 	int i;
 
