@@ -55,7 +55,7 @@ static int oldx = StartX, oldy = StartY; // 플레이어의 old 좌표
 static int newx = StartX, newy = StartY; //플레이어의 new 좌표
 static int keep_moving = 4;  //1:계속이동
 
-#define MAXBULLET 6  //플레이어의 최대 총알 수
+#define MAXBULLET 30  //플레이어의 최대 총알 수
 #define TRUE 1
 #define FALSE 0
 
@@ -66,6 +66,16 @@ struct {
 
 #define SPACE 0x20
 #define MAXENEMY 15
+
+struct BossEnemy {
+	int exist;
+	int x, y;
+	int move;
+};
+
+struct BossEnemy Boss;
+
+
 
 //@@@@@@@@@적@@@@@
 
@@ -84,9 +94,9 @@ char* EnemyType[] = {"★※★","♬★♬","㈜＠㈜","※＠※","▼★▼", "＃＃＃","＆�
 
 //@@@@@@@@@적 총알@@@@@@@@@@@
 //#define MAXENEMYBULLET 20 // 적 최대 총알 수
-#define MAXENEMYBULLET 5 // 적 최대 총알 수
+#define MAXENEMYBULLET 10 // 적 최대 총알 수
 
-static int enemybulletuse = 2; //적 총알 1초마다 생성
+static int enemybulletuse = 1; //적 총알 1초마다 생성
 static int enemybullet_frame_sync = 50;  //적 총알 속도조절
 
 struct {
@@ -94,13 +104,24 @@ struct {
 	int x, y;
 }EnemyBullet[MAXENEMYBULLET];
 
+bool IsLevel1 = true; // 1단계
+bool IsLevel2 = false; // 2단계
+bool IsLevel3 = false; // 3단계
+bool IsBoss = false; // 보스 단계
+
+
+bool IsEasy = false; // 난이도 이지 
+bool IsHard = false; // 난이도 하드
+
+
+
 //@@@@@@@@@적 총알@@@@@@@@@@@
 
 
 // 점수 판 들어갈 항목 들 전역 변수
 static int score = 0; // 점수
 static int heart = 5; // 생명
-
+static int BossLife = 50; // 보스 생명
 #define ITEM "<H>"
 #define SPEEDITEM "<S>"
 #define POWERITEM "<P>"
@@ -135,6 +156,79 @@ void gotoxy(int x, int y) //내가 원하는 위치로 커서 이동
 void textcolor(int fg_color, int bg_color)
 {
 	SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), fg_color | bg_color<<4);
+}
+
+//레벨 1 클리어 메시지
+void Level1ClearMessage(int x, int y) {
+
+	
+
+
+	textcolor(GREEN1, BLACK);
+	gotoxy(x, y );
+	printf("축하합니다~~");
+	gotoxy(x, y+1);
+	printf("레벨 1을 클리어 하였습니다!!");
+	gotoxy(x, y + 2);
+	printf("레벨 2로 넘어갑니다!!");
+	Sleep(1000);
+}
+
+//레벨 2 클리어 메시지
+void Level2ClearMessage(int x, int y) {
+
+
+	textcolor(GREEN1, BLACK);
+	gotoxy(x, y);
+	printf("축하합니다~~");
+	gotoxy(x, y + 1);
+	printf("레벨 2를 클리어 하였습니다!!");
+	gotoxy(x, y + 2);
+	printf("레벨 3으로 넘어갑니다!!");
+	Sleep(1000);
+}
+
+//레벨 3 클리어 메시지
+void Level3ClearMessage(int x, int y) {
+
+	textcolor(GREEN1, BLACK);
+	gotoxy(x, y);
+	printf("축하합니다~~");
+	gotoxy(x, y + 1);
+	printf("레벨 3을 클리어 하였습니다!!");
+	gotoxy(x, y + 2);
+	printf("보스 스테이지로 넘어갑니다!!");
+	Sleep(1000);
+}
+
+
+//Boss 그림 !!
+void BossDraw(int x, int y) {
+
+	textcolor(RED1, BLACK);
+	gotoxy(x, y);			printf("  ★★    ★★");
+	gotoxy(x , y + 1);		printf("@@@@@@@@@@@@@@@@");
+	gotoxy(x, y + 2);		printf("@@●@@@@@@@@●@@");
+	gotoxy(x, y + 3);		printf("@@@@@@@@@@@@@@@@");
+	gotoxy(x, y + 4);       printf("◈◈◈◈◈◈◈◈");
+	gotoxy(x, y + 5);       printf("◈◈◈    ◈◈◈");
+	gotoxy(x, y + 6);       printf("◈◈◈◈◈◈◈◈");
+
+
+	
+}
+
+void BossErase(int x, int y) {
+
+	textcolor(RED1, BLACK);
+	gotoxy(x, y);			printf("                ");
+	gotoxy(x, y+1);			printf("                ");
+	gotoxy(x, y+2);			printf("                ");
+	gotoxy(x, y+3);			printf("                ");
+	gotoxy(x, y+4);			printf("                ");
+	gotoxy(x, y+5);			printf("                ");
+	gotoxy(x, y+6);			printf("                ");
+
 }
 
 
@@ -560,7 +654,7 @@ int LoadingPage() {
 			printf("                                         ★                                                                \n");
 			printf("                                         ★                                                                \n");
 			printf("                                         ★                                                                \n");
-			printf("                                         ★                        로딩 중 30% !! .                          \n");
+			printf("                                         ★                        로딩 중 30%% !! .                          \n");
 			printf("                                         ★                                                                \n");
 			printf("                                         ★                                                                \n");
 			printf("                                         ★                                                                \n");
@@ -575,7 +669,7 @@ int LoadingPage() {
 			printf("                                         ★                                                                \n");
 			printf("                                         ★                                                                \n");
 			printf("                                         ★                                                                \n");
-			printf("                                         ★                        로딩 중 70% !! . .                      \n");
+			printf("                                         ★                        로딩 중 70%% !! . .                      \n");
 			printf("                                         ★                                                                \n");
 			printf("                                         ★                                                                \n");
 			printf("                                         ★                                                                \n");
@@ -593,7 +687,7 @@ int LoadingPage() {
 			printf("                                         ★                                                                ★\n");
 			printf("                                         ★                                                                ★\n");
 			printf("                                         ★                                                                ★\n");
-			printf("                                         ★                        로딩 중 100% !! . . .                     ★\n");
+			printf("                                         ★                        로딩 중 100%% !! . . .                   ★\n");
 			printf("                                         ★                                                                ★\n");
 			printf("                                         ★                                                                ★\n");
 			printf("                                         ★                                                                ★\n");
@@ -639,7 +733,378 @@ int LoadingPage() {
 	return selectedOption;
 }
 
+int Level2LoadingPage() {
+	cls(WHITE, BLACK);
+	//gotoxy(0, 0);
+	int selectedOption = 1;
+	// 특수키 0xe0 을 입력받으려면 unsigned char 로 선언해야 함
+	unsigned char ch;
+	bool StartPage = TRUE;
+	char key;
+	while (StartPage) {
+		textcolor(MAGENTA2, 0);
+		printf("\n");
+		printf("           ★★★★★      ★        ★    ★★★★★★    ★★★★★★    ★★★★★★    ★★★★★★    ★★         ★     ★★★★★★          \n");
+		printf("         ★                ★        ★    ★        ★    ★        ★         ★              ★         ★ ★        ★   ★                      \n");
+		printf("         ★                ★        ★    ★        ★    ★        ★         ★              ★         ★   ★      ★   ★                      \n");
+		printf("           ★★★★★      ★★★★★★    ★        ★    ★        ★         ★              ★         ★     ★    ★   ★      ★★★          \n");
 
+		printf("                     ★    ★        ★    ★        ★    ★        ★         ★              ★         ★       ★  ★   ★       ★             \n");
+		printf("                     ★    ★        ★    ★        ★    ★        ★         ★              ★         ★         ★★   ★       ★             \n");
+		printf("           ★★★★★      ★        ★    ★★★★★★    ★★★★★★         ★         ★★★★★★    ★           ★     ★★★★★★          \n");
+		printf("\n");
+
+		printf("                                           ★★★★★★          ★        ★             ★    ★★★★★★            \n");
+		printf("                                         ★                     ★★       ★★         ★★    ★                      \n");
+		printf("                                         ★                    ★  ★      ★ ★       ★ ★	★			            \n");
+		printf("                                         ★     ★★★        ★★★★     ★  ★     ★  ★    ★★★★★★            \n");
+		printf("                                         ★       ★         ★      ★	   ★	★   ★   ★    ★				        \n");
+		printf("                                         ★       ★        ★        ★   ★ 	 ★ ★    ★	★			            \n");
+		printf("                                           ★★★★★★    ★          ★  ★	  ★      ★    ★★★★★★			\n");
+		textcolor(11, 0);
+		printf("\n");
+		printf("\n");
+		printf("                                                                                       made by 1891093 전영식			\n");
+		textcolor(15, 0);
+
+		textcolor(BLUE1, 0);
+		printf("	                                                        ★ 2단계 화면으로 넘어가는 중입니다 !! ★\n");
+
+		textcolor(YELLOW1, 0);
+		if (selectedOption == 1) {
+			printf("                                         ★★★★★★★★★★★★★   Loading  \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                        로딩 중 30%% !! .                          \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("											\n");
+		}
+
+		else if (selectedOption == 2) {
+			printf("                                         ★★★★★★★★★★★★★   Loading  \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                        로딩 중 70%% !! . .                      \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★\n");
+
+
+
+		}
+		else if (selectedOption == 3) {
+			printf("                                         ★★★★★★★★★★★★★   Loading  ★★★★★★★★★★★★★★★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                        로딩 중 100%% !! . . .                   ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★\n");
+
+
+
+		}
+		else {
+			printf("                                         ★★★★★★★★★★★★★   Loading  ★★★★★★★★★★★★★★★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                         곧 시작 합니다 !!                      ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★\n");
+
+
+		}
+		Sleep(100);
+		selectedOption++;
+		Sleep(1000);
+
+		gotoxy(0, 0);
+
+		if (selectedOption == 5) {
+			cls(WHITE, BLACK); // 기존 화면 지우기
+			StartPage = FALSE;
+			break;
+		}
+
+
+	}
+
+	return selectedOption;
+}
+
+int Level3LoadingPage() {
+	cls(WHITE, BLACK);
+	//gotoxy(0, 0);
+	int selectedOption = 1;
+	// 특수키 0xe0 을 입력받으려면 unsigned char 로 선언해야 함
+	unsigned char ch;
+	bool StartPage = TRUE;
+	char key;
+	while (StartPage) {
+		textcolor(MAGENTA2, 0);
+		printf("\n");
+		printf("           ★★★★★      ★        ★    ★★★★★★    ★★★★★★    ★★★★★★    ★★★★★★    ★★         ★     ★★★★★★          \n");
+		printf("         ★                ★        ★    ★        ★    ★        ★         ★              ★         ★ ★        ★   ★                      \n");
+		printf("         ★                ★        ★    ★        ★    ★        ★         ★              ★         ★   ★      ★   ★                      \n");
+		printf("           ★★★★★      ★★★★★★    ★        ★    ★        ★         ★              ★         ★     ★    ★   ★      ★★★          \n");
+
+		printf("                     ★    ★        ★    ★        ★    ★        ★         ★              ★         ★       ★  ★   ★       ★             \n");
+		printf("                     ★    ★        ★    ★        ★    ★        ★         ★              ★         ★         ★★   ★       ★             \n");
+		printf("           ★★★★★      ★        ★    ★★★★★★    ★★★★★★         ★         ★★★★★★    ★           ★     ★★★★★★          \n");
+		printf("\n");
+
+		printf("                                           ★★★★★★          ★        ★             ★    ★★★★★★            \n");
+		printf("                                         ★                     ★★       ★★         ★★    ★                      \n");
+		printf("                                         ★                    ★  ★      ★ ★       ★ ★	★			            \n");
+		printf("                                         ★     ★★★        ★★★★     ★  ★     ★  ★    ★★★★★★            \n");
+		printf("                                         ★       ★         ★      ★	   ★	★   ★   ★    ★				        \n");
+		printf("                                         ★       ★        ★        ★   ★ 	 ★ ★    ★	★			            \n");
+		printf("                                           ★★★★★★    ★          ★  ★	  ★      ★    ★★★★★★			\n");
+		textcolor(11, 0);
+		printf("\n");
+		printf("\n");
+		printf("                                                                                       made by 1891093 전영식			\n");
+		textcolor(15, 0);
+
+		textcolor(BLUE1, 0);
+		printf("	                                                        ★ 3단계 화면으로 넘어가는 중입니다 !! ★\n");
+
+		textcolor(YELLOW1, 0);
+		if (selectedOption == 1) {
+			printf("                                         ★★★★★★★★★★★★★   Loading  \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                        로딩 중 30%% !! .                          \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("											\n");
+		}
+
+		else if (selectedOption == 2) {
+			printf("                                         ★★★★★★★★★★★★★   Loading  \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                        로딩 중 70%% !! . .                      \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★\n");
+
+
+
+		}
+		else if (selectedOption == 3) {
+			printf("                                         ★★★★★★★★★★★★★   Loading  ★★★★★★★★★★★★★★★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                        로딩 중 100%% !! . . .                   ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★\n");
+
+
+
+		}
+		else {
+			printf("                                         ★★★★★★★★★★★★★   Loading  ★★★★★★★★★★★★★★★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                         곧 시작 합니다 !!                      ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★\n");
+
+
+		}
+		Sleep(100);
+		selectedOption++;
+		Sleep(1000);
+
+		gotoxy(0, 0);
+
+		if (selectedOption == 5) {
+			cls(WHITE, BLACK); // 기존 화면 지우기
+			StartPage = FALSE;
+			break;
+		}
+
+
+	}
+
+	return selectedOption;
+}
+
+
+int BossLoadingPage() {
+	cls(WHITE, BLACK);
+	//gotoxy(0, 0);
+	int selectedOption = 1;
+	// 특수키 0xe0 을 입력받으려면 unsigned char 로 선언해야 함
+	unsigned char ch;
+	bool StartPage = TRUE;
+	char key;
+	while (StartPage) {
+		textcolor(MAGENTA2, 0);
+		printf("\n");
+		printf("           ★★★★★      ★        ★    ★★★★★★    ★★★★★★    ★★★★★★    ★★★★★★    ★★         ★     ★★★★★★          \n");
+		printf("         ★                ★        ★    ★        ★    ★        ★         ★              ★         ★ ★        ★   ★                      \n");
+		printf("         ★                ★        ★    ★        ★    ★        ★         ★              ★         ★   ★      ★   ★                      \n");
+		printf("           ★★★★★      ★★★★★★    ★        ★    ★        ★         ★              ★         ★     ★    ★   ★      ★★★          \n");
+
+		printf("                     ★    ★        ★    ★        ★    ★        ★         ★              ★         ★       ★  ★   ★       ★             \n");
+		printf("                     ★    ★        ★    ★        ★    ★        ★         ★              ★         ★         ★★   ★       ★             \n");
+		printf("           ★★★★★      ★        ★    ★★★★★★    ★★★★★★         ★         ★★★★★★    ★           ★     ★★★★★★          \n");
+		printf("\n");
+
+		printf("                                           ★★★★★★          ★        ★             ★    ★★★★★★            \n");
+		printf("                                         ★                     ★★       ★★         ★★    ★                      \n");
+		printf("                                         ★                    ★  ★      ★ ★       ★ ★	★			            \n");
+		printf("                                         ★     ★★★        ★★★★     ★  ★     ★  ★    ★★★★★★            \n");
+		printf("                                         ★       ★         ★      ★	   ★	★   ★   ★    ★				        \n");
+		printf("                                         ★       ★        ★        ★   ★ 	 ★ ★    ★	★			            \n");
+		printf("                                           ★★★★★★    ★          ★  ★	  ★      ★    ★★★★★★			\n");
+		textcolor(11, 0);
+		printf("\n");
+		printf("\n");
+		printf("                                                                                       made by 1891093 전영식			\n");
+		textcolor(15, 0);
+
+		textcolor(BLUE1, 0);
+		printf("	                                                        ★ 보스 스테이지로 넘어가는 중입니다 !! ★\n");
+
+		textcolor(YELLOW1, 0);
+		if (selectedOption == 1) {
+			printf("                                         ★★★★★★★★★★★★★   Loading  \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                        로딩 중 30%% !! .                          \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("											\n");
+		}
+
+		else if (selectedOption == 2) {
+			printf("                                         ★★★★★★★★★★★★★   Loading  \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                        로딩 중 70%% !! . .                      \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★                                                                \n");
+			printf("                                         ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★\n");
+
+
+
+		}
+		else if (selectedOption == 3) {
+			printf("                                         ★★★★★★★★★★★★★   Loading  ★★★★★★★★★★★★★★★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                        로딩 중 100%% !! . . .                   ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★\n");
+
+
+
+		}
+		else {
+			printf("                                         ★★★★★★★★★★★★★   Loading  ★★★★★★★★★★★★★★★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                         곧 시작 합니다 !!                      ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★\n");
+
+
+		}
+		Sleep(100);
+		selectedOption++;
+		Sleep(1000);
+
+		gotoxy(0, 0);
+
+		if (selectedOption == 5) {
+			cls(WHITE, BLACK); // 기존 화면 지우기
+			StartPage = FALSE;
+			break;
+		}
+
+
+	}
+
+	return selectedOption;
+}
 int pickMyJet() {
 	int selectedOption = 1;
 	// 특수키 0xe0 을 입력받으려면 unsigned char 로 선언해야 함
@@ -940,11 +1405,16 @@ int pickGameLevel() {
 					pickMyLevelPage = false;
 					cls(WHITE, BLACK); // 기존 화면 지우기
 					PickMyLevel = 1;
+					IsEasy = true; // 난이도 이지 
+					IsHard = false; // 난이도 하드
 					break;
 				case 2:
 					pickMyLevelPage = false;
 					cls(WHITE, BLACK); // 기존 화면 지우기
 					PickMyLevel = 2;
+					IsEasy = false; // 난이도 이지 
+					IsHard = true; // 난이도 하드
+					
 					break;
 				default:
 					// 잘못된 옵션 처리
@@ -1103,25 +1573,28 @@ void MoveBullet() {
 
 
 // 적생성!!
-void CreateBasicEnemy() {
-	int i, location, direct, hieght;
+void CreateBasicEnemy(int count) {
+	int i, location, x, y;
 	location = rand() % 2;
-	direct = 5 + rand() % 90;  //x 5 , y3
-	//hieght = 3 + rand() % 10;
-	hieght = 2;
+	x = 5 + rand() % 90;  //x 5 , y3
+	if (IsLevel3) {
+		y = 3 + rand() % 3;
+	}
+	else{ y = 2;}
+	
 	for (i = 0; i < MAXENEMY && Enemy[i].exist == TRUE; i++) {}
 	if (i != MAXENEMY) {
 		if (location == 1) {
-			Enemy[i].x = direct;
-			Enemy[i].y = hieght;
+			Enemy[i].x = x;
+			Enemy[i].y = y;
 			Enemy[i].move = 1;
 		}
 		else {
-			Enemy[i].x = direct;
-			Enemy[i].y = hieght;
+			Enemy[i].x = x;
+			Enemy[i].y = y;
 			Enemy[i].move = -1;
 		}
-		Enemy[i].type = rand() % 10;
+		Enemy[i].type = rand() % count;
 		Enemy[i].exist = TRUE;
 	}
 }
@@ -1161,6 +1634,7 @@ void MoveEnemy() {
 	}
 }
 
+//basic이 쓰는 움직임 1단계!!
 void MoveEnemy2() {
 	int i;
 	for (i = 0; i < MAXENEMY; i++) {
@@ -1189,6 +1663,85 @@ void MoveEnemy2() {
 	}
 }
 
+// 2단계 적이 쓰는 움직임 
+void MoveEnemy3() {
+	int i;
+	for (i = 0; i < MAXENEMY; i++) {
+		if (Enemy[i].exist == TRUE) {
+			if (Enemy[i].type == -1) {
+				gotoxy(Enemy[i].x, Enemy[i].y);
+				printf("          ");
+				Enemy[i].exist = FALSE;
+				continue;
+			}
+
+			gotoxy(Enemy[i].x, Enemy[i].y);
+			printf("      "); // 현재 위치의 적 삭제
+
+			// 좌우로 움직이기 위한 랜덤값 생성
+			int moveDirection = rand() % 3; // 0, 1, 2 중 하나의 값을 랜덤으로 생성
+
+			switch (moveDirection) {
+			case 0:
+				Enemy[i].x -= 1; // 왼쪽으로 이동
+				break;
+			case 1:
+				Enemy[i].x += 1; // 오른쪽으로 이동
+				break;
+			default:
+				// 움직이지 않음
+				break;
+			}
+
+			Enemy[i].y += 1; // 아래로 이동
+
+			if (Enemy[i].y >= HEIGHT - 4) {
+				Enemy[i].exist = FALSE; // 화면을 벗어난 적 삭제
+			}
+			else {
+				gotoxy(Enemy[i].x, Enemy[i].y);
+				textcolor(RED1, BLACK);
+				printf(EnemyType[Enemy[i].type]); // 새로운 위치에 적 그리기
+			}
+		}
+	}
+}
+
+void MoveBoss() {
+	if (Boss.exist == TRUE) {
+		int randomMove = rand() % 3; // 0, 1, 2 중에서 랜덤으로 선택
+		switch (randomMove) {
+		case 0:
+			Boss.move = -1; // 왼쪽으로 이동
+			break;
+		case 1:
+			Boss.move = 0; // 가만히 있음
+			break;
+		case 2:
+			Boss.move = 1; // 오른쪽으로 이동
+			break;
+		}
+
+		Boss.x += Boss.move;
+
+		// 보스가 왼쪽 벽에 닿았을 때
+		if (Boss.x <= 3) {
+			Boss.x = 3;
+		}
+
+		// 보스가 오른쪽 벽에 닿았을 때
+		if (Boss.x >= WIDTH - 40) {
+			Boss.x = WIDTH - 40;
+		}
+
+		gotoxy(Boss.x - Boss.move, Boss.y);
+		printf("            "); // 이전 위치 지우기
+
+		gotoxy(Boss.x, Boss.y);
+		textcolor(RED1, BLACK);
+		BossDraw(Boss.x, Boss.y); // 새로운 위치에 보스 그리기
+	}
+}
 
 //적총알
 void EnemyBulletshow() {
@@ -1253,12 +1806,17 @@ void EnemyBulletMove() {
 void info() {
 	//textcolor(YELLOW2, BLACK);
 	textcolor(WHITE, BLACK);
+	
+	
+	
 	gotoxy(122, 5); printf("점수: %d", score);
 	gotoxy(122, 10);
 	printf("목숨:");
+	textcolor(RED1, BLACK);
 	if (heart >= 4) {
 		heart = 4;
 		gotoxy(130, 10); printf("       ");
+		
 		gotoxy(130, 10); printf("♥♥♥♥");
 	}
 	else if (heart == 3) {
@@ -1278,10 +1836,73 @@ void info() {
 		printf("  ");
 	}
 
+	if (IsBoss) {
+		gotoxy(2, 2);
+		printf("보스 HP:");
+
+		
+		textcolor(RED1, BLACK);
+		if (BossLife >= 40) {
+			
+			gotoxy(11, 2); printf("       ");
+
+			gotoxy(11, 2); printf("♥♥♥♥");
+		}
+		else if (BossLife == 30) {
+			gotoxy(11, 2); printf("       ");
+			gotoxy(11, 2); printf("♥♥♥");
+		}
+		else if (BossLife == 20) {
+			gotoxy(11, 2); printf("       ");
+			gotoxy(11, 2); printf("♥♥");
+		}
+		else if (BossLife == 1) {
+			gotoxy(11, 2); printf("       ");
+			gotoxy(11, 2); printf("♥");
+		}
+		else {
+			gotoxy(11, 2);
+			printf("  ");
+			//게임 종료창 띄우게?
+		}
+
+
+	}
+
+
+	if (IsEasy) {
+		textcolor(GREEN1, BLACK);
+		gotoxy(122, 13); printf("난이도: 이지모드");
+	}
+
+	if (IsHard) {
+		textcolor(RED1, BLACK);
+		gotoxy(122, 13); printf("난이도: 하드모드");
+	}
+
+	if (IsLevel1) {
+		textcolor(YELLOW1, BLACK);
+		gotoxy(122, 15); printf("현재단계: 1단계");
+	}
+
+	if (IsLevel2) {
+		textcolor(YELLOW1, BLACK);
+		gotoxy(122, 15); printf("현재단계: 2단계");
+	}
+	if (IsLevel3) {
+		textcolor(YELLOW1, BLACK);
+		gotoxy(122, 15); printf("현재단계: 3단계");
+	}
+
+	if (IsBoss) {
+		textcolor(YELLOW1, BLACK);
+		gotoxy(122, 15); printf("현재단계: 보스 스테이지");
+	}
+
 }
 
 // 내가 적 총알에 맞았을 때
-void playerfall() {
+void playerTouch() {
 	int i;
 	for (i = 0; i < MAXENEMYBULLET; i++) {
 		if (EnemyBullet[i].exist == FALSE)
@@ -1336,6 +1957,27 @@ void DeleteEnemy() {
 	
 }
 
+// 보스가 내 총알에 맞았을 때 상황 구현하기
+void DeleteBoss() {
+	int i;
+
+
+	for (i = 0; i < MAXENEMY; i++) {
+		if (Enemy[i].exist == FALSE || Enemy[i].type == -1)
+			continue;
+		if (Enemy[i].y == Bullet[i].y && abs(Enemy[i].x - Bullet[i].x) <= 17) {
+			gotoxy(Bullet[i].x, Bullet[i].y);
+			printf("   ");
+			Bullet[i].exist = FALSE;
+			score += 20;
+			BossLife--;
+			info();
+			break;
+		}
+	}
+
+}
+
 
 //게임화면에서 맵 만들기!!!
 void GameMap() {
@@ -1358,7 +2000,7 @@ void GameMap() {
 
 	
 	if (PickMyLevel == 1) {
-		textcolor(WHITE, BLACK);
+		textcolor(GREEN1, BLACK);
 	}
 	//난이도가 hard 라면
 	if (PickMyLevel == 2) {
@@ -1385,10 +2027,11 @@ void GameMap() {
 
 
 // 우선 게임을 진행이 되면 우리는 계속 키보드를 활용할 것이니 while문을 통해 구현해보자
-//게임 메인 화면
-void gamestart() {
+//게임 LEVEL 1 단계 화면 
+void Level1gamestart() {
 	unsigned char ch;
 	int i;
+	
 	//난이도가 easy라면
 	if (PickMyLevel == 1) {
 		init_game(); // 게임 설정 초기화 해주기
@@ -1403,7 +2046,7 @@ void gamestart() {
 	info(); // 내 현재 게임 진행상황 !! (while문안에 넣으면 끊겨보이기 때문에 변경사항이 있을 때만 호출하게 해놓으면서 끊김 현상을 멈추었다.)
 	// 적 관련 변수 선언
 	int enemySpawnTimer = 0;
-	int enemySpawnInterval = 10;  // 적 생성 간격 조절
+	int enemySpawnInterval = 10;  // 적 생성 간격 조절  2단계 난이도 조절해주기
 		while (1) {
 			if (kbhit() == 1) {
 				ch = getch();
@@ -1435,44 +2078,44 @@ void gamestart() {
 				//플레이어 무브 속도조절 함수
 			}
 
-		
+		// 점수가 200 보다 크면 다음 단계로 넘어가기 위해서 막아놓기
+			if (score < 100) {
+				//총알 속도조절 함수
+				MoveBullet();
 
-			//총알 속도조절 함수
-			MoveBullet();
-			
 
-			// 적 생성
-			if (enemySpawnTimer >= enemySpawnInterval) {
-				CreateBasicEnemy();
-				enemySpawnTimer = 0;
+				// 적 생성
+				if (enemySpawnTimer >= enemySpawnInterval) {
+					CreateBasicEnemy(3);  // 1단계니까 적 종류 다양하게 주지 않는다. 
+					enemySpawnTimer = 0;
+				}
+				else {
+					enemySpawnTimer++;
+				}
+
+				// 적 움직임 처리
+				MoveEnemy2();
+
+
+
+				// 적 총알 생성 및 움직임 처리
+				//EnemyBulletMove();
+				//EnemyBulletshow();
+
+				// 적 총알에 맞았을 때 처리
+				//playerTouch();
+
+
+				DeleteEnemy();// 적이 내 총알에 맞아 죽는 것을 처리
+				EnemyTouch(); // 적과 내가 만났을 때  생명력 -1 
 			}
-			else {
-				enemySpawnTimer++;
+			
+			if (score >= 100) {
+
+				Level1ClearMessage(60,10);
+				break;
 			}
-
-			 // 적 움직임 처리
-			MoveEnemy2();
-
-
-
-			// 적 총알 생성 및 움직임 처리
-			//EnemyBulletMove();
-			//EnemyBulletshow();
-			
-			// 적 총알에 맞았을 때 처리
-			//playerfall();
-
-			
-			DeleteEnemy();// 적이 내 총알에 맞아 죽는 것을 처리
-			EnemyTouch(); // 적과 내가 만났을 때  생명력 -1 
 		
-			
-			
-			
-
-			
-
-
 			
 			// 게임 정보 표시
 			
@@ -1482,6 +2125,350 @@ void gamestart() {
 			frame_count++;// frame_count 값으로 속도 조절을 한다.
 		}
 }
+
+
+// 우선 게임을 진행이 되면 우리는 계속 키보드를 활용할 것이니 while문을 통해 구현해보자
+//게임 LEVEL 2 단계 화면 
+void Level2gamestart() {
+	cls(WHITE, BLACK);
+	unsigned char ch;
+	int i;
+
+	//난이도가 easy라면
+	if (PickMyLevel == 1) {
+		init_game(); // 게임 설정 초기화 해주기
+	}
+	//난이도가 hard 라면
+	if (PickMyLevel == 2) {
+		init_game(); // 게임 설정 초기화 해주기
+	}
+
+	GameMap(); // 게임 맵 그려주기!!! easy는 흰색 HARD는 빨간색 
+	Zet1Draw(oldx, oldy); // 처음에 비행기 그려주기!!  (내가 선택한 비행기가 그려진다.)
+	info(); // 내 현재 게임 진행상황 !! (while문안에 넣으면 끊겨보이기 때문에 변경사항이 있을 때만 호출하게 해놓으면서 끊김 현상을 멈추었다.)
+	// 적 관련 변수 선언
+	int enemySpawnTimer = 0;
+	int enemySpawnInterval = 5;  // 적 생성 간격 조절
+	while (1) {
+		if (kbhit() == 1) {
+			ch = getch();
+			if (ch == SPECIAL1 || ch == SPECIAL2) {
+				ch = getch();
+				switch (ch) {
+				case UP: case DOWN: case LEFT: case RIGHT:
+					player1(ch);
+					if (frame_count % p1_frame_sync == 0)
+						player1(0);
+					break;
+				default:
+					if (frame_count % p1_frame_sync == 0)
+						player1(0);
+				}
+			}
+			if (ch == SPACE) {
+				for (i = 0; i < MAXBULLET && Bullet[i].exist == TRUE; i++) {
+					//DrawBullet(i); // 수정: 총알을 화면에 그림
+				}
+				if (i != MAXBULLET) {
+					Bullet[i].x = newx + 4;
+					Bullet[i].y = newy - 1;
+					Bullet[i].exist = TRUE;
+				}
+			}
+		}
+		else {
+			//플레이어 무브 속도조절 함수
+		}
+
+		// 점수가 200 보다 크면 다음 단계로 넘어가기 위해서 막아놓기
+		if (score < 200) {
+			//총알 속도조절 함수
+			MoveBullet();
+
+
+			// 적 생성
+			if (enemySpawnTimer >= enemySpawnInterval) {
+				CreateBasicEnemy(7); // 2단계니까 적 종류 다양하게 해주기 
+				enemySpawnTimer = 0;
+			}
+			else {
+				enemySpawnTimer++;
+			}
+
+			// 적 움직임 2단계로 처리 하자!
+			MoveEnemy3();
+
+
+
+			// 적 총알 생성 및 움직임 처리
+			//EnemyBulletMove();
+			//EnemyBulletshow();
+
+			// 적 총알에 맞았을 때 처리
+			//playerTouch();
+
+
+			DeleteEnemy();// 적이 내 총알에 맞아 죽는 것을 처리
+			EnemyTouch(); // 적과 내가 만났을 때  생명력 -1 
+		}
+
+		// 3단계로 넘어가기 
+		if (score >= 200) {
+
+			Level2ClearMessage(60, 10); // 레벨 2단계 클리어 메시지 남기기
+			break;
+		}
+
+
+		// 게임 정보 표시
+
+
+
+		Sleep(Delay); // Delay 값을 줄이고
+		frame_count++;// frame_count 값으로 속도 조절을 한다.
+	}
+}
+
+
+// 우선 게임을 진행이 되면 우리는 계속 키보드를 활용할 것이니 while문을 통해 구현해보자
+//게임 LEVEL 3 단계 화면 
+void Level3gamestart() {
+	cls(WHITE, BLACK);
+	unsigned char ch;
+	int i;
+
+	//난이도가 easy라면
+	if (PickMyLevel == 1) {
+		init_game(); // 게임 설정 초기화 해주기
+	}
+	//난이도가 hard 라면
+	if (PickMyLevel == 2) {
+		init_game(); // 게임 설정 초기화 해주기
+	}
+
+	GameMap(); // 게임 맵 그려주기!!! easy는 흰색 HARD는 빨간색 
+	Zet1Draw(oldx, oldy); // 처음에 비행기 그려주기!!  (내가 선택한 비행기가 그려진다.)
+	info(); // 내 현재 게임 진행상황 !! (while문안에 넣으면 끊겨보이기 때문에 변경사항이 있을 때만 호출하게 해놓으면서 끊김 현상을 멈추었다.)
+	// 적 관련 변수 선언
+	int enemySpawnTimer = 0;
+	int enemySpawnInterval = 5;  // 적 생성 간격 조절
+	while (1) {
+		if (kbhit() == 1) {
+			ch = getch();
+			if (ch == SPECIAL1 || ch == SPECIAL2) {
+				ch = getch();
+				switch (ch) {
+				case UP: case DOWN: case LEFT: case RIGHT:
+					player1(ch);
+					if (frame_count % p1_frame_sync == 0)
+						player1(0);
+					break;
+				default:
+					if (frame_count % p1_frame_sync == 0)
+						player1(0);
+				}
+			}
+			if (ch == SPACE) {
+				for (i = 0; i < MAXBULLET && Bullet[i].exist == TRUE; i++) {
+					//DrawBullet(i); // 수정: 총알을 화면에 그림
+				}
+				if (i != MAXBULLET) {
+					Bullet[i].x = newx + 4;
+					Bullet[i].y = newy - 1;
+					Bullet[i].exist = TRUE;
+				}
+			}
+		}
+		else {
+			//플레이어 무브 속도조절 함수
+		}
+
+		// 점수가 200 보다 크면 다음 단계로 넘어가기 위해서 막아놓기
+		if (score < 360) {
+			//총알 속도조절 함수
+			MoveBullet();
+
+
+			// 적 생성
+			if (enemySpawnTimer >= enemySpawnInterval) {
+				CreateBasicEnemy(10); // 3단계니까 적 종류 다양하게 해주기 
+				enemySpawnTimer = 0;
+			}
+			else {
+				enemySpawnTimer++;
+			}
+
+			// 적 움직임 3단계로 처리 하자!
+			MoveEnemy();
+
+
+
+			// 적 총알 생성 및 움직임 처리
+			EnemyBulletMove();
+			EnemyBulletshow();
+
+			// 적 총알에 맞았을 때 처리
+			playerTouch();
+
+
+			DeleteEnemy();// 적이 내 총알에 맞아 죽는 것을 처리
+			EnemyTouch(); // 적과 내가 만났을 때  생명력 -1 
+		}
+
+		// 3단계로 넘어가기 
+		if (score >= 360) {
+
+			Level3ClearMessage(60, 10); // 레벨 2단계 클리어 메시지 남기기
+			break;
+		}
+
+
+		// 게임 정보 표시
+
+
+
+		Sleep(Delay); // Delay 값을 줄이고
+		frame_count++;// frame_count 값으로 속도 조절을 한다.
+	}
+}
+
+
+// 우선 게임을 진행이 되면 우리는 계속 키보드를 활용할 것이니 while문을 통해 구현해보자
+//게임 보스 단계 화면 
+void Bossgamestart() {
+	cls(WHITE, BLACK);
+	textcolor(GREEN1, BLACK);
+	Boss.x = 60;
+	Boss.y = 3;
+	gotoxy(60, 17);
+
+	printf("보스가 곧 출현해요!!!!!!!!!!!!!!!");
+	
+	Sleep(1000);
+	cls(WHITE, BLACK);
+
+	unsigned char ch;
+	int i;
+
+	//난이도가 easy라면
+	if (PickMyLevel == 1) {
+		init_game(); // 게임 설정 초기화 해주기
+	}
+	//난이도가 hard 라면
+	if (PickMyLevel == 2) {
+		init_game(); // 게임 설정 초기화 해주기
+	}
+
+	GameMap(); // 게임 맵 그려주기!!! easy는 흰색 HARD는 빨간색 
+	Zet1Draw(oldx, oldy); // 처음에 비행기 그려주기!!  (내가 선택한 비행기가 그려진다.)
+	//BossDraw(60,11);
+	info(); // 내 현재 게임 진행상황 !! (while문안에 넣으면 끊겨보이기 때문에 변경사항이 있을 때만 호출하게 해놓으면서 끊김 현상을 멈추었다.)
+	// 적 관련 변수 선언
+	int enemySpawnTimer = 0;
+	int enemySpawnInterval = 5;  // 적 생성 간격 조절
+	while (1) {
+		if (kbhit() == 1) {
+			ch = getch();
+			if (ch == SPECIAL1 || ch == SPECIAL2) {
+				ch = getch();
+				switch (ch) {
+				case UP: case DOWN: case LEFT: case RIGHT:
+					player1(ch);
+					if (frame_count % p1_frame_sync == 0)
+						player1(0);
+					break;
+				default:
+					if (frame_count % p1_frame_sync == 0)
+						player1(0);
+				}
+			}
+			if (ch == SPACE) {
+				for (i = 0; i < MAXBULLET && Bullet[i].exist == TRUE; i++) {
+					//DrawBullet(i); // 수정: 총알을 화면에 그림
+				}
+				if (i != MAXBULLET) {
+					Bullet[i].x = newx + 4;
+					Bullet[i].y = newy - 1;
+					Bullet[i].exist = TRUE;
+				}
+			}
+		}
+		else {
+			//플레이어 무브 속도조절 함수
+		}
+
+		// 점수가 200 보다 크면 다음 단계로 넘어가기 위해서 막아놓기
+		if (score < 500) {
+			//총알 속도조절 함수
+			MoveBullet();
+			//MoveBoss();
+
+			// 보스 움직임
+			if (frame_count % 10 == 0) {
+				int moveDirection = rand() % 2; // 0 또는 1 중 하나의 값을 랜덤으로 생성
+
+				switch (moveDirection) {
+				case 0:
+					BossErase(Boss.x, Boss.y); // 이전 위치 지우기
+					Boss.x--; // 왼쪽으로 이동
+					BossDraw(Boss.x, Boss.y); // 새로운 위치에 보스 그리기
+					break;
+				case 1:
+					BossErase(Boss.x, Boss.y); // 이전 위치 지우기
+					Boss.x++; // 오른쪽으로 이동
+					BossDraw(Boss.x, Boss.y); // 새로운 위치에 보스 그리기
+					break;
+				}
+			}
+			DeleteBoss();
+			//// 적 생성
+			//if (enemySpawnTimer >= enemySpawnInterval) {
+			//	CreateBasicEnemy(10); // 3단계니까 적 종류 다양하게 해주기 
+			//	enemySpawnTimer = 0;
+			//}
+			//else {
+			//	enemySpawnTimer++;
+			//}
+
+			//// 적 움직임 3단계로 처리 하자!
+			//MoveEnemy();
+
+			//
+
+			//// 적 총알 생성 및 움직임 처리
+			//EnemyBulletMove();
+			//EnemyBulletshow();
+
+			//// 적 총알에 맞았을 때 처리
+			//playerTouch();
+
+
+			//DeleteEnemy();// 적이 내 총알에 맞아 죽는 것을 처리
+			//EnemyTouch(); // 적과 내가 만났을 때  생명력 -1 
+		}
+
+		// 3단계로 넘어가기 
+		if (score >= 500) {
+
+			Level3ClearMessage(60, 10); // 레벨 2단계 클리어 메시지 남기기
+			break;
+		}
+
+
+		// 게임 정보 표시
+
+
+
+		Sleep(Delay); // Delay 값을 줄이고
+		frame_count++;// frame_count 값으로 속도 조절을 한다.
+	}
+}
+
+
+
+
+
+
 
 
 
@@ -1512,12 +2499,29 @@ void main()
 	while (isFinish == false) {
 		if (isGameRunning) {// 게임 실행 중인 경우
 			
+		
 			pickMyJet(); // 비행기를 고른다!!
 			
 			pickGameLevel();// 난이도 조절 화면 
 			LoadingPage();// 로딩 화면 !!
 
-			gamestart(); // 게임 시작!!
+			IsLevel1 = true; // 1단계
+			Level1gamestart(); // 1단계 게임 시작!!
+			IsLevel1 = false; // 1단계
+
+			Level2LoadingPage();	// 2단계 로딩 페이지 
+			IsLevel2 = true; // 2단계
+			Level2gamestart();      // 2단계 게임 시작
+			IsLevel2 = false; // 2단계
+			Level3LoadingPage();	// 3단계 로딩 페이지 
+			IsLevel3 = true; // 3단계
+			Level3gamestart();      // 3단계 게임 시작
+			IsLevel3 = false; // 3단계
+			BossLoadingPage(); // 보스로 가는 로딩 페이지
+			IsBoss = true;
+			Bossgamestart(); // 보스 단계 게임 시작!!
+
+
 		
 		
 			
