@@ -71,9 +71,9 @@ struct BossEnemy {
 	int exist;
 	int x, y;
 	int move;
-};
+}Boss;
 
-struct BossEnemy Boss;
+//struct BossEnemy Boss;
 
 
 
@@ -1486,7 +1486,104 @@ void init_game() {
 
 
 
+//게임 정보창
+void info() {
+	//textcolor(YELLOW2, BLACK);
+	textcolor(WHITE, BLACK);
 
+
+
+	gotoxy(122, 5); printf("점수: %d", score);
+	gotoxy(122, 10);
+	printf("목숨:");
+	textcolor(RED1, BLACK);
+	if (heart >= 4) {
+		heart = 4;
+		gotoxy(130, 10); printf("       ");
+
+		gotoxy(130, 10); printf("♥♥♥♥");
+	}
+	else if (heart == 3) {
+		gotoxy(130, 10); printf("       ");
+		gotoxy(130, 10); printf("♥♥♥");
+	}
+	else if (heart == 2) {
+		gotoxy(130, 10); printf("       ");
+		gotoxy(130, 10); printf("♥♥");
+	}
+	else if (heart == 1) {
+		gotoxy(130, 10); printf("       ");
+		gotoxy(130, 10); printf("♥");
+	}
+	else {
+		gotoxy(130, 10);
+		printf("  ");
+	}
+
+	if (IsBoss) {
+		gotoxy(2, 2);
+		printf("보스 HP:");
+
+
+		textcolor(RED1, BLACK);
+		if (BossLife >= 40) {
+
+			gotoxy(11, 2); printf("       ");
+
+			gotoxy(11, 2); printf("♥♥♥♥");
+		}
+		else if (BossLife == 30) {
+			gotoxy(11, 2); printf("       ");
+			gotoxy(11, 2); printf("♥♥♥");
+		}
+		else if (BossLife == 20) {
+			gotoxy(11, 2); printf("       ");
+			gotoxy(11, 2); printf("♥♥");
+		}
+		else if (BossLife == 1) {
+			gotoxy(11, 2); printf("       ");
+			gotoxy(11, 2); printf("♥");
+		}
+		else {
+			gotoxy(11, 2);
+			printf("  ");
+			//게임 종료창 띄우게?
+		}
+
+
+	}
+
+
+	if (IsEasy) {
+		textcolor(GREEN1, BLACK);
+		gotoxy(122, 13); printf("난이도: 이지모드");
+	}
+
+	if (IsHard) {
+		textcolor(RED1, BLACK);
+		gotoxy(122, 13); printf("난이도: 하드모드");
+	}
+
+	if (IsLevel1) {
+		textcolor(YELLOW1, BLACK);
+		gotoxy(122, 15); printf("현재단계: 1단계");
+	}
+
+	if (IsLevel2) {
+		textcolor(YELLOW1, BLACK);
+		gotoxy(122, 15); printf("현재단계: 2단계");
+	}
+	if (IsLevel3) {
+		textcolor(YELLOW1, BLACK);
+		gotoxy(122, 15); printf("현재단계: 3단계");
+	}
+
+	if (IsBoss) {
+		textcolor(YELLOW1, BLACK);
+		gotoxy(122, 15); printf("현재단계: 보스 스테이지");
+	}
+
+}
 
 
 
@@ -1551,7 +1648,7 @@ void EraseBullet(int i) {
 }
 
 //총알 움직임 
-void MoveBullet() {
+void MoveBullet3() {
 	int i;
 
 	for (i = 0; i < MAXBULLET; i++) {
@@ -1569,6 +1666,44 @@ void MoveBullet() {
 
 	Sleep(30);
 }
+
+bool CheckBulletBossCollision(int bulletIndex) {
+	if (abs(Boss.y - Bullet[bulletIndex].y) <=8 && abs(Boss.x - Bullet[bulletIndex].x) <= 13) {
+		gotoxy(Bullet[bulletIndex].x, Bullet[bulletIndex].y);
+		printf("   ");
+		return true;
+	}
+	return false;
+}
+
+void MoveBullet() {
+	int i;
+
+	for (i = 0; i < MAXBULLET; i++) {
+		if (Bullet[i].exist == TRUE) {
+			EraseBullet(i);
+			Bullet[i].y--;
+			if (Bullet[i].y <= 2) { // y 값이 3 이하일 때
+				Bullet[i].y = -1; // 총알이 사라진 상태를 나타내기 위해 y 값을 -1로 설정
+				Bullet[i].exist = FALSE;
+			}
+			else {
+				DrawBullet(i);
+				if (CheckBulletBossCollision(i)) {
+					Bullet[i].exist = FALSE;
+					score += 20;
+					BossLife--;
+					info();
+				}
+			}
+		}
+	}
+
+	Sleep(30);
+}
+
+
+
 
 
 
@@ -1802,104 +1937,7 @@ void EnemyBulletMove() {
 
 }
 
-//게임 정보창
-void info() {
-	//textcolor(YELLOW2, BLACK);
-	textcolor(WHITE, BLACK);
-	
-	
-	
-	gotoxy(122, 5); printf("점수: %d", score);
-	gotoxy(122, 10);
-	printf("목숨:");
-	textcolor(RED1, BLACK);
-	if (heart >= 4) {
-		heart = 4;
-		gotoxy(130, 10); printf("       ");
-		
-		gotoxy(130, 10); printf("♥♥♥♥");
-	}
-	else if (heart == 3) {
-		gotoxy(130, 10); printf("       ");
-		gotoxy(130, 10); printf("♥♥♥");
-	}
-	else if (heart == 2) {
-		gotoxy(130, 10); printf("       ");
-		gotoxy(130, 10); printf("♥♥");
-	}
-	else if (heart == 1) {
-		gotoxy(130, 10); printf("       ");
-		gotoxy(130, 10); printf("♥");
-	}
-	else {
-		gotoxy(130, 10);
-		printf("  ");
-	}
 
-	if (IsBoss) {
-		gotoxy(2, 2);
-		printf("보스 HP:");
-
-		
-		textcolor(RED1, BLACK);
-		if (BossLife >= 40) {
-			
-			gotoxy(11, 2); printf("       ");
-
-			gotoxy(11, 2); printf("♥♥♥♥");
-		}
-		else if (BossLife == 30) {
-			gotoxy(11, 2); printf("       ");
-			gotoxy(11, 2); printf("♥♥♥");
-		}
-		else if (BossLife == 20) {
-			gotoxy(11, 2); printf("       ");
-			gotoxy(11, 2); printf("♥♥");
-		}
-		else if (BossLife == 1) {
-			gotoxy(11, 2); printf("       ");
-			gotoxy(11, 2); printf("♥");
-		}
-		else {
-			gotoxy(11, 2);
-			printf("  ");
-			//게임 종료창 띄우게?
-		}
-
-
-	}
-
-
-	if (IsEasy) {
-		textcolor(GREEN1, BLACK);
-		gotoxy(122, 13); printf("난이도: 이지모드");
-	}
-
-	if (IsHard) {
-		textcolor(RED1, BLACK);
-		gotoxy(122, 13); printf("난이도: 하드모드");
-	}
-
-	if (IsLevel1) {
-		textcolor(YELLOW1, BLACK);
-		gotoxy(122, 15); printf("현재단계: 1단계");
-	}
-
-	if (IsLevel2) {
-		textcolor(YELLOW1, BLACK);
-		gotoxy(122, 15); printf("현재단계: 2단계");
-	}
-	if (IsLevel3) {
-		textcolor(YELLOW1, BLACK);
-		gotoxy(122, 15); printf("현재단계: 3단계");
-	}
-
-	if (IsBoss) {
-		textcolor(YELLOW1, BLACK);
-		gotoxy(122, 15); printf("현재단계: 보스 스테이지");
-	}
-
-}
 
 // 내가 적 총알에 맞았을 때
 void playerTouch() {
@@ -1961,11 +1999,10 @@ void DeleteEnemy() {
 void DeleteBoss() {
 	int i;
 
-
 	for (i = 0; i < MAXENEMY; i++) {
 		if (Enemy[i].exist == FALSE || Enemy[i].type == -1)
 			continue;
-		if (Enemy[i].y == Bullet[i].y && abs(Enemy[i].x - Bullet[i].x) <= 17) {
+		if (abs(Boss.y - Bullet[i].y) <= 17 && abs(Boss.x - Bullet[i].x) <= 17) {
 			gotoxy(Bullet[i].x, Bullet[i].y);
 			printf("   ");
 			Bullet[i].exist = FALSE;
@@ -1975,7 +2012,6 @@ void DeleteBoss() {
 			break;
 		}
 	}
-
 }
 
 
@@ -2500,24 +2536,24 @@ void main()
 		if (isGameRunning) {// 게임 실행 중인 경우
 			
 		
-			pickMyJet(); // 비행기를 고른다!!
-			
-			pickGameLevel();// 난이도 조절 화면 
-			LoadingPage();// 로딩 화면 !!
+			//pickMyJet(); // 비행기를 고른다!!
+			//
+			//pickGameLevel();// 난이도 조절 화면 
+			//LoadingPage();// 로딩 화면 !!
 
-			IsLevel1 = true; // 1단계
-			Level1gamestart(); // 1단계 게임 시작!!
-			IsLevel1 = false; // 1단계
+			//IsLevel1 = true; // 1단계
+			//Level1gamestart(); // 1단계 게임 시작!!
+			//IsLevel1 = false; // 1단계
 
-			Level2LoadingPage();	// 2단계 로딩 페이지 
-			IsLevel2 = true; // 2단계
-			Level2gamestart();      // 2단계 게임 시작
-			IsLevel2 = false; // 2단계
-			Level3LoadingPage();	// 3단계 로딩 페이지 
-			IsLevel3 = true; // 3단계
-			Level3gamestart();      // 3단계 게임 시작
-			IsLevel3 = false; // 3단계
-			BossLoadingPage(); // 보스로 가는 로딩 페이지
+			//Level2LoadingPage();	// 2단계 로딩 페이지 
+			//IsLevel2 = true; // 2단계
+			//Level2gamestart();      // 2단계 게임 시작
+			//IsLevel2 = false; // 2단계
+			//Level3LoadingPage();	// 3단계 로딩 페이지 
+			//IsLevel3 = true; // 3단계
+			//Level3gamestart();      // 3단계 게임 시작
+			//IsLevel3 = false; // 3단계
+			//BossLoadingPage(); // 보스로 가는 로딩 페이지
 			IsBoss = true;
 			Bossgamestart(); // 보스 단계 게임 시작!!
 
