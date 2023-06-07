@@ -17,7 +17,7 @@
 #define MAGENTA1 5
 #define YELLOW1	6
 #define GRAY1	7
-#define GRAY2	8
+#define GRAY2	8               
 #define BLUE2	9
 #define GREEN2	10
 #define CYAN2	11
@@ -49,6 +49,7 @@ int p1_frame_sync = 4; //플레이어의 이동속도
 #define StartX 72  //시작 유저의 x좌표
 #define StartY 30  //시작 유저의 y좌표
 
+int remainingTime = 5; // 보스에서 제한 시간 2분
 static int called = 0;
 
 static int oldx = StartX, oldy = StartY; // 플레이어의 old 좌표
@@ -97,7 +98,7 @@ char* EnemyType[] = {"★※★","♬★♬","㈜＠㈜","※＠※","▼★▼", "＃＃＃","＆�
 #define MAXENEMYBULLET 10 // 적 최대 총알 수
 
 static int enemybulletuse = 1; //적 총알 1초마다 생성
-static int enemybullet_frame_sync = 50;  //적 총알 속도조절
+static int enemybullet_frame_sync = 60;  //적 총알 속도조절
 
 struct {
 	int exist;
@@ -158,6 +159,14 @@ void textcolor(int fg_color, int bg_color)
 	SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), fg_color | bg_color<<4);
 }
 
+
+// 시간을 표시하는 함수
+void displayTime(int minutes, int seconds) {
+	textcolor(CYAN1, BLACK);
+	gotoxy(122, 3);
+	printf("남은 시간: %02d:%02d", minutes, seconds);
+}
+
 //레벨 1 클리어 메시지
 void Level1ClearMessage(int x, int y) {
 
@@ -202,6 +211,20 @@ void Level3ClearMessage(int x, int y) {
 }
 
 
+//레벨 보스 클리어 메시지
+void BossClearMessage(int x, int y) {
+
+	textcolor(GREEN1, BLACK);
+	gotoxy(x, y);
+	printf("축하합니다!!!!★★★★★★★★★★★★★★");
+	gotoxy(x, y + 1);
+	printf("보스 스테이지를 클리어 하였습니다!!");
+	gotoxy(x, y + 2);
+	printf("축하합니다★★★★★★★★★★★★★★★★");
+	Sleep(1000);
+}
+
+
 //Boss 그림 !!
 void BossDraw(int x, int y) {
 
@@ -218,6 +241,22 @@ void BossDraw(int x, int y) {
 	
 }
 
+//Boss 맞았을 때 그림
+void BossDraw2(int x, int y) {
+
+	textcolor(GRAY1, BLACK);
+	gotoxy(x, y);			printf("  ★★    ★★");
+	gotoxy(x, y + 1);		printf("@@@@@@@@@@@@@@@@");
+	textcolor(MAGENTA2, BLACK);
+	gotoxy(x, y + 2);		printf("@@●@@@@@@@@●@@");
+	gotoxy(x, y + 3);		printf("@@@@@@@@@@@@@@@@");
+	textcolor(CYAN1, BLACK);
+	gotoxy(x, y + 4);       printf("◈◈◈◈◈◈◈◈");
+	gotoxy(x, y + 5);       printf("◈◈◈    ◈◈◈");
+	gotoxy(x, y + 6);       printf("◈◈◈◈◈◈◈◈");
+
+}
+
 void BossErase(int x, int y) {
 
 	textcolor(RED1, BLACK);
@@ -231,6 +270,15 @@ void BossErase(int x, int y) {
 
 }
 
+//비행기 맞았을 때 
+void Zet10(int x, int y) {
+
+	textcolor(RED1, BLACK);
+	gotoxy(x, y);
+	printf("    ▲    ");
+	gotoxy(x, y + 1);
+	printf("★■♠■★");
+}
 
 //비행기 1 그림
 void Zet1(int x, int y) {
@@ -475,6 +523,123 @@ void IntroPage() {  // 시작 인트로 화면
 		cls(WHITE, BLACK);
 		break;
 	}
+}
+
+int FinishPage() {
+	int selectedOption = 1;
+	// 특수키 0xe0 을 입력받으려면 unsigned char 로 선언해야 함
+	unsigned char ch;
+	bool StartPage = TRUE;
+	char key;
+	while (StartPage) {
+		changeTextColor();
+		printf("                                           ★★★★★★          ★        ★             ★    ★★★★★★            \n");
+		printf("                                         ★                     ★★       ★★         ★★    ★                      \n");
+		printf("                                         ★                    ★  ★      ★ ★       ★ ★	★			            \n");
+		printf("                                         ★     ★★★        ★★★★     ★  ★     ★  ★    ★★★★★★            \n");
+		changeTextColor();
+		printf("                                         ★       ★         ★      ★	   ★	★   ★   ★    ★				        \n");
+		printf("                                         ★       ★        ★        ★   ★ 	 ★ ★    ★	★			            \n");
+		printf("                                           ★★★★★★    ★          ★  ★	  ★      ★    ★★★★★★			\n");
+
+		changeTextColor();
+		printf("\n"); 
+		printf("                       ★★★★★★     ★               ★★★★★★★            ★           ★★★★★★★           ★       ★     \n");
+		printf("                     ★                 ★               ★                       ★★          ★          ★           ★       ★     \n");
+		printf("                     ★                 ★               ★                      ★  ★         ★          ★           ★       ★     \n");
+		printf("                     ★                 ★               ★★★★★★★         ★★★★        ★★★★★★★           ★       ★     \n");
+		changeTextColor();
+		printf("                     ★                 ★               ★                    ★      ★       ★  ★                   ★       ★     \n");
+		printf("                     ★                 ★               ★                   ★        ★      ★      ★                               \n");
+		printf("                       ★★★★★★     ★★★★★★★   ★★★★★★★      ★          ★     ★          ★           ★       ★     \n");
+		printf("\n");
+		textcolor(11, 0);
+		printf("\n");
+		printf("\n");
+		printf("                                                                                       made by 1891093 전영식			\n");
+		textcolor(15, 0);
+		printf("\n");
+
+		if (selectedOption == 1) {
+			printf("                                         ★★★★★★★★★★★★★★   MENU   ★★★★★★★★★★★★★★★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                      ->   1.돌아가기                           ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                           2.게임종료                           ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★\n");
+
+
+
+		}
+
+		
+		else {
+			printf("                                         ★★★★★★★★★★★★★★   MENU   ★★★★★★★★★★★★★★★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                         1.돌아가기                             ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                      -> 2.게임종료                             ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★\n");
+
+
+
+		}
+
+
+
+		Sleep(100);
+		gotoxy(0, 0);
+		if (kbhit()) {
+			key = getch();
+
+			if (key == UP) {
+				selectedOption--;
+				if (selectedOption == 0) { selectedOption = 2; }
+			}
+			if (key == DOWN) {
+				selectedOption++;
+				if (selectedOption == 3) { selectedOption = 1; }
+			}
+
+			if (key == ENTER) {
+				switch (selectedOption) {
+				case 1:
+					// 첫 번째 옵션 처리
+					StartPage = false;
+					cls(WHITE, BLACK); // 기존 화면 지우기
+					break;
+				case 2:
+					StartPage = false;
+					cls(WHITE, BLACK); // 기존 화면 지우기
+					break;
+				case 3:
+					StartPage = false;
+					cls(WHITE, BLACK); // 기존 화면 지우기
+					break;
+				default:
+					// 잘못된 옵션 처리
+					break;
+				}
+			}
+		}
+
+	}
+
+	return selectedOption;
 }
 
 int MenuPage() {
@@ -1237,7 +1402,7 @@ int pickMyJet() {
 
 
 
-		Sleep(100);
+		
 		gotoxy(0, 0);
 		if (kbhit()) {
 			key = getch();
@@ -1275,7 +1440,7 @@ int pickMyJet() {
 				}
 			}
 		}
-
+		Sleep(300);
 	}
 
 	return selectedOption;
@@ -1384,7 +1549,7 @@ int pickGameLevel() {
 
 
 
-		Sleep(100);
+		Sleep(300);
 		gotoxy(0, 0);
 		if (kbhit()) {
 			key = getch();
@@ -1486,104 +1651,110 @@ void init_game() {
 
 
 
-//게임 정보창
+	//게임 정보창
+
 void info() {
-	//textcolor(YELLOW2, BLACK);
-	textcolor(WHITE, BLACK);
+		//textcolor(YELLOW2, BLACK);
+		textcolor(WHITE, BLACK);
+
+		//int minutes = remainingTime / 60;
+		//int seconds = remainingTime % 60;
+
+		//displayTime(minutes, seconds);
 
 
 
-	gotoxy(122, 5); printf("점수: %d", score);
-	gotoxy(122, 10);
-	printf("목숨:");
-	textcolor(RED1, BLACK);
-	if (heart >= 4) {
-		heart = 4;
-		gotoxy(130, 10); printf("       ");
-
-		gotoxy(130, 10); printf("♥♥♥♥");
-	}
-	else if (heart == 3) {
-		gotoxy(130, 10); printf("       ");
-		gotoxy(130, 10); printf("♥♥♥");
-	}
-	else if (heart == 2) {
-		gotoxy(130, 10); printf("       ");
-		gotoxy(130, 10); printf("♥♥");
-	}
-	else if (heart == 1) {
-		gotoxy(130, 10); printf("       ");
-		gotoxy(130, 10); printf("♥");
-	}
-	else {
-		gotoxy(130, 10);
-		printf("  ");
-	}
-
-	if (IsBoss) {
-		gotoxy(2, 2);
-		printf("보스 HP:");
-
-
+		gotoxy(122, 5); printf("점수: %d", score);
+		gotoxy(122, 10);
+		printf("목숨:");
 		textcolor(RED1, BLACK);
-		if (BossLife >= 40) {
+		if (heart >= 4) {
+			heart = 4;
+			gotoxy(130, 10); printf("       ");
 
-			gotoxy(11, 2); printf("       ");
-
-			gotoxy(11, 2); printf("♥♥♥♥");
+			gotoxy(130, 10); printf("♥♥♥♥");
 		}
-		else if (BossLife == 30) {
-			gotoxy(11, 2); printf("       ");
-			gotoxy(11, 2); printf("♥♥♥");
+		else if (heart == 3) {
+			gotoxy(130, 10); printf("       ");
+			gotoxy(130, 10); printf("♥♥♥");
 		}
-		else if (BossLife == 20) {
-			gotoxy(11, 2); printf("       ");
-			gotoxy(11, 2); printf("♥♥");
+		else if (heart == 2) {
+			gotoxy(130, 10); printf("       ");
+			gotoxy(130, 10); printf("♥♥");
 		}
-		else if (BossLife == 1) {
-			gotoxy(11, 2); printf("       ");
-			gotoxy(11, 2); printf("♥");
+		else if (heart == 1) {
+			gotoxy(130, 10); printf("       ");
+			gotoxy(130, 10); printf("♥");
 		}
 		else {
-			gotoxy(11, 2);
+			gotoxy(130, 10);
 			printf("  ");
-			//게임 종료창 띄우게?
+		}
+
+		if (IsBoss) {
+			gotoxy(2, 2);
+			printf("보스 HP:");
+
+
+			textcolor(RED1, BLACK);
+			if (BossLife >= 40) {
+
+				gotoxy(11, 2); printf("       ");
+
+				gotoxy(11, 2); printf("♥♥♥♥");
+			}
+			else if (BossLife == 30) {
+				gotoxy(11, 2); printf("       ");
+				gotoxy(11, 2); printf("♥♥♥");
+			}
+			else if (BossLife == 20) {
+				gotoxy(11, 2); printf("       ");
+				gotoxy(11, 2); printf("♥♥");
+			}
+			else if (BossLife == 1) {
+				gotoxy(11, 2); printf("       ");
+				gotoxy(11, 2); printf("♥");
+			}
+			else {
+				gotoxy(11, 2);
+				printf("  ");
+				//게임 종료창 띄우게?
+			}
+
+
 		}
 
 
-	}
+		if (IsEasy) {
+			textcolor(GREEN1, BLACK);
+			gotoxy(122, 13); printf("난이도: 이지모드");
+		}
 
+		if (IsHard) {
+			textcolor(RED1, BLACK);
+			gotoxy(122, 13); printf("난이도: 하드모드");
+		}
 
-	if (IsEasy) {
-		textcolor(GREEN1, BLACK);
-		gotoxy(122, 13); printf("난이도: 이지모드");
-	}
+		if (IsLevel1) {
+			textcolor(YELLOW1, BLACK);
+			gotoxy(122, 15); printf("현재단계: 1단계");
+		}
 
-	if (IsHard) {
-		textcolor(RED1, BLACK);
-		gotoxy(122, 13); printf("난이도: 하드모드");
-	}
+		if (IsLevel2) {
+			textcolor(YELLOW1, BLACK);
+			gotoxy(122, 15); printf("현재단계: 2단계");
+		}
+		if (IsLevel3) {
+			textcolor(YELLOW1, BLACK);
+			gotoxy(122, 15); printf("현재단계: 3단계");
+		}
 
-	if (IsLevel1) {
-		textcolor(YELLOW1, BLACK);
-		gotoxy(122, 15); printf("현재단계: 1단계");
-	}
+		if (IsBoss) {
+			textcolor(YELLOW1, BLACK);
+			gotoxy(122, 15); printf("현재단계: 보스 스테이지");
+		}
 
-	if (IsLevel2) {
-		textcolor(YELLOW1, BLACK);
-		gotoxy(122, 15); printf("현재단계: 2단계");
 	}
-	if (IsLevel3) {
-		textcolor(YELLOW1, BLACK);
-		gotoxy(122, 15); printf("현재단계: 3단계");
-	}
-
-	if (IsBoss) {
-		textcolor(YELLOW1, BLACK);
-		gotoxy(122, 15); printf("현재단계: 보스 스테이지");
-	}
-
-}
 
 
 
@@ -1668,7 +1839,7 @@ void MoveBullet3() {
 }
 
 bool CheckBulletBossCollision(int bulletIndex) {
-	if (abs(Boss.y - Bullet[bulletIndex].y) <=8 && abs(Boss.x - Bullet[bulletIndex].x) <= 13) {
+	if (abs(Boss.y - Bullet[bulletIndex].y) <=8 && abs(Boss.x - Bullet[bulletIndex].x) <= 15) {
 		gotoxy(Bullet[bulletIndex].x, Bullet[bulletIndex].y);
 		printf("   ");
 		return true;
@@ -1692,6 +1863,8 @@ void MoveBullet() {
 				if (CheckBulletBossCollision(i)) {
 					Bullet[i].exist = FALSE;
 					score += 20;
+					//Boss 그림 !!
+					BossDraw2(Boss.x, Boss.y);
 					BossLife--;
 					info();
 				}
@@ -1717,6 +1890,33 @@ void CreateBasicEnemy(int count) {
 	}
 	else{ y = 2;}
 	
+	for (i = 0; i < MAXENEMY && Enemy[i].exist == TRUE; i++) {}
+	if (i != MAXENEMY) {
+		if (location == 1) {
+			Enemy[i].x = x;
+			Enemy[i].y = y;
+			Enemy[i].move = 1;
+		}
+		else {
+			Enemy[i].x = x;
+			Enemy[i].y = y;
+			Enemy[i].move = -1;
+		}
+		Enemy[i].type = rand() % count;
+		Enemy[i].exist = TRUE;
+	}
+}
+
+// 적생성!!
+void CreateBasicEnemy2(int count) {
+	int i, location, x, y;
+	location = rand() % 2;
+	x = 5 + rand() % 90;  //x 5 , y3
+	
+		y = 10 + rand() % 3;
+	
+
+
 	for (i = 0; i < MAXENEMY && Enemy[i].exist == TRUE; i++) {}
 	if (i != MAXENEMY) {
 		if (location == 1) {
@@ -1881,7 +2081,7 @@ void MoveBoss() {
 //적총알
 void EnemyBulletshow() {
 	if (PickMyLevel == 1) {
-		textcolor(WHITE, BLACK);
+		textcolor(GREEN1, BLACK);
 		gotoxy(0, 0); printf("■");
 	}
 	if (PickMyLevel == 2) {
@@ -1898,18 +2098,38 @@ void EnemyBulletshow() {
 		EnemyBullet[j].exist = TRUE;
 	}
 }
+void BossBulletshow() {
+	if (PickMyLevel == 1) {
+		textcolor(GREEN1, BLACK);
+		gotoxy(0, 0); printf("■");
+	}
+	if (PickMyLevel == 2) {
+		textcolor(RED1, BLACK);
+		gotoxy(0, 0); printf("■");
+	}
+
+	int j;
+	int random = rand() % MAXENEMY;
+	for (j = 0; j < MAXENEMYBULLET && EnemyBullet[j].exist == TRUE; j++) {}
+	if (j != MAXENEMYBULLET) {
+		EnemyBullet[j].x = Boss.x + 6;
+		EnemyBullet[j].y = Boss.y + 7;
+		EnemyBullet[j].exist = TRUE;
+	}
+}
+
 
 //총알 그리기
 void EnemyBulletdraw(int i) {
 	textcolor(RED2, BLACK);
 	gotoxy(EnemyBullet[i].x, EnemyBullet[i].y);
-	printf("*");
+	printf("◈");
 }
 
 // 적총알 지우기
 void EnemyBulleterase(int i) {
 	gotoxy(EnemyBullet[i].x, EnemyBullet[i].y);
-	printf(" ");
+	printf("  ");
 }
 
 // 적총알 움직임
@@ -1939,17 +2159,22 @@ void EnemyBulletMove() {
 
 
 
+
 // 내가 적 총알에 맞았을 때
 void playerTouch() {
 	int i;
 	for (i = 0; i < MAXENEMYBULLET; i++) {
 		if (EnemyBullet[i].exist == FALSE)
 			continue;
-		if (EnemyBullet[i].y == newy && abs(EnemyBullet[i].x - newx) <= 5) {
+		if (EnemyBullet[i].y == newy && abs(EnemyBullet[i].x - newx) <= 3) {
 			EnemyBullet[i].exist = FALSE;
 			gotoxy(EnemyBullet[i].x, EnemyBullet[i].y);
 			printf("    ");
 			heart--;
+			Zet10(newx, newy);
+			Sleep(20);
+
+			
 			info();
 		}
 	}
@@ -1967,6 +2192,9 @@ void EnemyTouch() {
 			Enemy[i].exist = FALSE;
 			gotoxy(Enemy[i].x, Enemy[i].y);
 			printf("      ");
+			Zet10(newx, newy);
+			Sleep(20);
+
 			heart--;
 			info();
 		}
@@ -1982,11 +2210,16 @@ void DeleteEnemy() {
 	for (i = 0; i < MAXENEMY; i++) {
 		if (Enemy[i].exist == FALSE || Enemy[i].type == -1)
 			continue;
-		if (Enemy[i].y == Bullet[i].y && abs(Enemy[i].x - Bullet[i].x) <= 12) {
+		if (Enemy[i].y == Bullet[i].y && abs(Enemy[i].x - Bullet[i].x) <= 15) {
 			gotoxy(Bullet[i].x, Bullet[i].y);
 			printf("   ");
 			Bullet[i].exist = FALSE;
 			Enemy[i].type = -1;
+			gotoxy(Enemy[i].x+2, Bullet[i].y);
+			textcolor(BLUE2, BLACK);
+			printf("★+20");
+			Sleep(20);
+			printf("  ");
 			score += 20;
 			info();
 			break;
@@ -2385,7 +2618,7 @@ void Bossgamestart() {
 
 	unsigned char ch;
 	int i;
-
+	int startTime = time(NULL); // 게임 시작 시간 (초)
 	//난이도가 easy라면
 	if (PickMyLevel == 1) {
 		init_game(); // 게임 설정 초기화 해주기
@@ -2434,7 +2667,7 @@ void Bossgamestart() {
 		}
 
 		// 점수가 200 보다 크면 다음 단계로 넘어가기 위해서 막아놓기
-		if (score < 500) {
+		if (BossLife != 0 ) {
 			//총알 속도조절 함수
 			MoveBullet();
 			//MoveBoss();
@@ -2456,47 +2689,67 @@ void Bossgamestart() {
 					break;
 				}
 			}
-			DeleteBoss();
+			
+			//DeleteBoss();
 			//// 적 생성
-			//if (enemySpawnTimer >= enemySpawnInterval) {
-			//	CreateBasicEnemy(10); // 3단계니까 적 종류 다양하게 해주기 
-			//	enemySpawnTimer = 0;
-			//}
-			//else {
-			//	enemySpawnTimer++;
-			//}
+			if (enemySpawnTimer >= enemySpawnInterval) {
+				CreateBasicEnemy2(10); // 3단계니까 적 종류 다양하게 해주기 
+				enemySpawnTimer = 0;
+			}
+			else {
+				enemySpawnTimer++;
+			}
 
 			//// 적 움직임 3단계로 처리 하자!
-			//MoveEnemy();
+			MoveEnemy();
 
 			//
 
 			//// 적 총알 생성 및 움직임 처리
-			//EnemyBulletMove();
-			//EnemyBulletshow();
+			
 
+			EnemyBulletshow(); // 적 총알 좌표 설정
+
+			EnemyBulletMove(); // 적 총알 그리고 지우기 
+
+			BossBulletshow(); // 보스 총알 좌표 설정
+
+			//BossBulletMove(); // 보스 총알 그리고 지우기 
 			//// 적 총알에 맞았을 때 처리
-			//playerTouch();
+			playerTouch();
 
 
-			//DeleteEnemy();// 적이 내 총알에 맞아 죽는 것을 처리
-			//EnemyTouch(); // 적과 내가 만났을 때  생명력 -1 
+			DeleteEnemy();// 적이 내 총알에 맞아 죽는 것을 처리
+			EnemyTouch(); // 적과 내가 만났을 때  생명력 -1 
 		}
 
-		// 3단계로 넘어가기 
-		if (score >= 500) {
+		// 보스가 피가 없다면
+		if (BossLife <= 0) {
 
-			Level3ClearMessage(60, 10); // 레벨 2단계 클리어 메시지 남기기
+			BossClearMessage(60, 10); // 보스단계 클리어 메시지!!
 			break;
 		}
 
+		int currentTime = time(NULL); // 현재 시간
+		int elapsedSeconds = currentTime - startTime; // 경과 시간 (초)
+		int remainingSeconds = remainingTime - elapsedSeconds; // 남은 시간 (초)
+		int minutes = remainingSeconds / 60; // 분
+		int seconds = remainingSeconds % 60; // 초
+
+		displayTime(minutes, seconds);
+
+		// 제한시간이 지나면 
+		if (remainingSeconds <= 0) {
+			BossClearMessage(60, 10); // 보스단계 클리어 메시지!!
+			break;
+		}
 
 		// 게임 정보 표시
 
-
-
+	
 		Sleep(Delay); // Delay 값을 줄이고
 		frame_count++;// frame_count 값으로 속도 조절을 한다.
+		
 	}
 }
 
@@ -2555,7 +2808,16 @@ void main()
 			//IsLevel3 = false; // 3단계
 			//BossLoadingPage(); // 보스로 가는 로딩 페이지
 			IsBoss = true;
+			cls(WHITE, BLACK);
 			Bossgamestart(); // 보스 단계 게임 시작!!
+			IsBoss = false;
+			IntroPage();
+			if (FinishPage() == 2) {
+				//isGameRunning = false;
+				isFinish = TRUE;
+			};
+			isGameRunning = false;
+			//클리어 창!! 다시할 지 말지 정하는 창 
 
 
 		
