@@ -109,7 +109,7 @@ bool IsLevel1 = true; // 1단계
 bool IsLevel2 = false; // 2단계
 bool IsLevel3 = false; // 3단계
 bool IsBoss = false; // 보스 단계
-
+bool IsFail = false; // 실패 했는 지?
 
 bool IsEasy = false; // 난이도 이지 
 bool IsHard = false; // 난이도 하드
@@ -210,6 +210,20 @@ void Level3ClearMessage(int x, int y) {
 	Sleep(1000);
 }
 
+
+
+//레벨 보스 클리어 메시지
+void BossFailMessage(int x, int y) {
+
+	textcolor(RED1, BLACK);
+	gotoxy(x, y);
+	printf("아쉽습니다ㅠㅠㅠㅠㅠㅠㅠ★★★★★★★★★★★★★★");
+	gotoxy(x, y + 1);
+	printf("보스 스테이지를 클리어 실패 하였습니다!!");
+	gotoxy(x, y + 2);
+	printf("아쉽습니다ㅠㅠㅠㅠㅠㅠㅠ");
+	Sleep(1000);
+}
 
 //레벨 보스 클리어 메시지
 void BossClearMessage(int x, int y) {
@@ -523,6 +537,123 @@ void IntroPage() {  // 시작 인트로 화면
 		cls(WHITE, BLACK);
 		break;
 	}
+}
+int FailPage() {
+	cls(WHITE, BLACK);
+	int selectedOption = 1;
+	// 특수키 0xe0 을 입력받으려면 unsigned char 로 선언해야 함
+	unsigned char ch;
+	bool StartPage = TRUE;
+	char key;
+	while (StartPage) {
+		changeTextColor();
+		printf("                                           ★★★★★★          ★        ★             ★    ★★★★★★            \n");
+		printf("                                         ★                     ★★       ★★         ★★    ★                      \n");
+		printf("                                         ★                    ★  ★      ★ ★       ★ ★	★			            \n");
+		printf("                                         ★     ★★★        ★★★★     ★  ★     ★  ★    ★★★★★★            \n");
+		changeTextColor();
+		printf("                                         ★       ★         ★      ★	   ★	★   ★   ★    ★				        \n");
+		printf("                                         ★       ★        ★        ★   ★ 	 ★ ★    ★	★			            \n");
+		printf("                                           ★★★★★★    ★          ★  ★	  ★      ★    ★★★★★★			\n");
+
+		changeTextColor();
+		printf("\n");
+		printf("                                         ★★★★★★★★         ★           ★★★★★★★    ★                   ★        ★     \n");
+		printf("                                         ★                      ★★                ★          ★                   ★        ★        \n");
+		printf("                                         ★★★★★★★★                            ★          ★                   ★        ★     \n");
+		printf("                                         ★                    ★★★★              ★          ★                   ★        ★   \n");
+		changeTextColor();
+		printf("                                         ★                   ★      ★             ★          ★                   ★        ★           \n");
+		printf("                                         ★                  ★        ★            ★          ★                                 \n");
+		printf("                                         ★                 ★          ★     ★★★★★★★    ★★★★★★★       ★        ★                \n");
+		printf("\n");
+		textcolor(11, 0);
+		printf("\n");
+		printf("\n");
+		printf("                                                                                       made by 1891093 전영식			\n");
+		textcolor(15, 0);
+		printf("\n");
+
+		if (selectedOption == 1) {
+			printf("                                         ★★★★★★★★★★★★★★   MENU   ★★★★★★★★★★★★★★★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                      ->   1.돌아가기                           ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                           2.게임종료                           ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★\n");
+
+
+
+		}
+
+
+		else {
+			printf("                                         ★★★★★★★★★★★★★★   MENU   ★★★★★★★★★★★★★★★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                         1.돌아가기                             ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                      -> 2.게임종료                             ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★                                                                ★\n");
+			printf("                                         ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★\n");
+
+
+
+		}
+
+
+
+		Sleep(100);
+		gotoxy(0, 0);
+		if (kbhit()) {
+			key = getch();
+
+			if (key == UP) {
+				selectedOption--;
+				if (selectedOption == 0) { selectedOption = 2; }
+			}
+			if (key == DOWN) {
+				selectedOption++;
+				if (selectedOption == 3) { selectedOption = 1; }
+			}
+
+			if (key == ENTER) {
+				switch (selectedOption) {
+				case 1:
+					// 첫 번째 옵션 처리
+					StartPage = false;
+					cls(WHITE, BLACK); // 기존 화면 지우기
+					break;
+				case 2:
+					StartPage = false;
+					cls(WHITE, BLACK); // 기존 화면 지우기
+					break;
+				case 3:
+					StartPage = false;
+					cls(WHITE, BLACK); // 기존 화면 지우기
+					break;
+				default:
+					// 잘못된 옵션 처리
+					break;
+				}
+			}
+		}
+
+	}
+
+	return selectedOption;
 }
 
 int FinishPage() {
@@ -2740,7 +2871,8 @@ void Bossgamestart() {
 
 		// 제한시간이 지나면 
 		if (remainingSeconds <= 0) {
-			BossClearMessage(60, 10); // 보스단계 클리어 메시지!!
+			BossFailMessage(60, 10); // 보스단계 클리어 메시지!!
+			IsFail = TRUE;
 			break;
 		}
 
@@ -2811,14 +2943,28 @@ void main()
 			cls(WHITE, BLACK);
 			Bossgamestart(); // 보스 단계 게임 시작!!
 			IsBoss = false;
-			IntroPage();
-			if (FinishPage() == 2) {
-				//isGameRunning = false;
-				isFinish = TRUE;
-			};
-			isGameRunning = false;
-			//클리어 창!! 다시할 지 말지 정하는 창 
 
+			// 게임 실패 했을 때
+			if(IsFail){
+				
+				if (FailPage() == 2) {
+					//isGameRunning = false;
+					isFinish = TRUE;
+				};
+				isGameRunning = false;
+				IsFail = false;
+
+			}
+			// 게임 클리어 했을 때
+			else {
+				IntroPage();
+				if (FinishPage() == 2) {
+					//isGameRunning = false;
+					isFinish = TRUE;
+				};
+				isGameRunning = false;
+				//클리어 창!! 다시할 지 말지 정하는 창 
+			}
 
 		
 		
