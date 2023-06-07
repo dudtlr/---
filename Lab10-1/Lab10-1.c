@@ -8,6 +8,10 @@
 #include<time.h> 
 #include<stdbool.h>     // 논리형 자료를 쓰기 위한 라이브러리
 
+#include <mmsystem.h>
+#include <process.h>
+#pragma comment(lib,"winmm.lib")
+
 // 색상 정의
 #define BLACK	0
 #define BLUE1	1
@@ -41,15 +45,29 @@
 #define ENTER '\r'
 #define SPACE 0x20
 
+
+
+#define LifeItem "♥"  // 목숨 + 1 
+#define TimeITEM "<T>"  // 제한시간 30초 늘려주기
+#define GodITEM "★" // 5초간 무적
+
+
+int items[WIDTH][HEIGHT] = { 0 };
+int items_count = 0;
+int items_use = 35; //아이템 나타나는 시간(목숨 아이템)
+
+
+
+
 int Delay = 10;
-int frame_count = 0; // game 진행 frame count 로 속도 조절용으로 사용된다.
-int p1_frame_sync = 4; //플레이어의 이동속도
+int frame_count = 10; // game 진행 frame count 로 속도 조절용으로 사용된다.
+int p1_frame_sync = 2; //플레이어의 이동속도
 
 
 #define StartX 72  //시작 유저의 x좌표
 #define StartY 30  //시작 유저의 y좌표
 
-int remainingTime = 5; // 보스에서 제한 시간 2분
+int remainingTime = 120; // 보스에서 제한 시간 2분
 static int called = 0;
 
 static int oldx = StartX, oldy = StartY; // 플레이어의 old 좌표
@@ -66,7 +84,8 @@ struct {
 }Bullet[MAXBULLET];
 
 #define SPACE 0x20
-#define MAXENEMY 15
+#define MAXENEMY  10
+#define MAXENEMY2 10
 
 struct BossEnemy {
 	int exist;
@@ -88,6 +107,14 @@ struct {
 	int type;
 }Enemy[MAXENEMY];
 
+struct {
+	int exist;
+	int x, y;
+	int number;
+	int move;
+	int type;
+}Enemy2[MAXENEMY2];
+
 char* EnemyType[] = {"★※★","♬★♬","㈜＠㈜","※＠※","▼★▼", "＃＃＃","＆＠＆","♠★♠","♣♣♣","◈★◈"};
 
 //@@@@@@@@@적@@@@@
@@ -97,13 +124,21 @@ char* EnemyType[] = {"★※★","♬★♬","㈜＠㈜","※＠※","▼★▼", "＃＃＃","＆�
 //#define MAXENEMYBULLET 20 // 적 최대 총알 수
 #define MAXENEMYBULLET 10 // 적 최대 총알 수
 
-static int enemybulletuse = 1; //적 총알 1초마다 생성
+#define MAXENEMYBULLET2 10 // 적 최대 총알 수
+
+
+static int enemybulletuse = 2; //적 총알 1초마다 생성
 static int enemybullet_frame_sync = 60;  //적 총알 속도조절
 
 struct {
 	int exist;
 	int x, y;
 }EnemyBullet[MAXENEMYBULLET];
+
+struct {
+	int exist;
+	int x, y;
+}EnemyBullet2[MAXENEMYBULLET];
 
 bool IsLevel1 = true; // 1단계
 bool IsLevel2 = false; // 2단계
@@ -121,29 +156,23 @@ bool IsHard = false; // 난이도 하드
 
 // 점수 판 들어갈 항목 들 전역 변수
 static int score = 0; // 점수
-static int heart = 5; // 생명
-static int BossLife = 50; // 보스 생명
-#define ITEM "<H>"
-#define SPEEDITEM "<S>"
-#define POWERITEM "<P>"
-#define MISILEITEM "<M>"
-
-int items[WIDTH][HEIGHT] = { 0 };
-int items_count = 0;
-int items_use = 35; //아이템 나타나는 시간(목숨 아이템)
+int heart = 5; // 생명
+int BossLife = 50; // 보스 생명
 
 
-int speeditems[WIDTH][HEIGHT] = { 0 };
-int speeditems_count = 0;
-int speeditems_use = 23; //아이템 나타나는 시간(스피드 아이템)
+
+
+
+
 
 
 int MyJet = 1; // 제트기 고르는 변수
 
 int PickMyLevel = 1; //난이도 기본 easy 1 / hard 2
 
-
-
+#define LIFE_ITEM 1
+#define TIME_ITEM 2
+#define GOD_ITEM 3
 
 
 void gotoxy(int x, int y) //내가 원하는 위치로 커서 이동
@@ -154,11 +183,143 @@ void gotoxy(int x, int y) //내가 원하는 위치로 커서 이동
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos); //Windows.h 에 정의 되어있다.
 }
 
+
 void textcolor(int fg_color, int bg_color)
 {
-	SetConsoleTextAttribute( GetStdHandle( STD_OUTPUT_HANDLE ), fg_color | bg_color<<4);
+	SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), fg_color | bg_color << 4);
 }
 
+// 생명 아이템 초기 설정
+void showLifeItem() {
+	int x, y;
+	x = 40 + rand() % 40;
+	y = 10;
+	textcolor(RED2, BLACK);
+	gotoxy(x, y);
+	printf(LifeItem);
+	items[x][y] = LIFE_ITEM;
+	items_count++;
+	textcolor(RED2, BLACK);
+}
+
+// 시간 아이템 초기 설정
+void showTimeItem() {
+	int x, y;
+	x = 40 + rand() % 40;
+	y = 10;
+	textcolor(GREEN1, BLACK);
+	gotoxy(x, y);
+	printf(TimeITEM);
+	items[x][y] = TIME_ITEM;
+	items_count++;
+	textcolor(GREEN1, BLACK);
+}
+
+// 무적 아이템 초기 설정
+void showGodItem() {
+	int x, y;
+	x = 40 + rand() % 40;
+	y = 10;
+	textcolor(YELLOW1, BLACK);
+	gotoxy(x, y);
+	printf(GodITEM);
+	items[x][y] = GOD_ITEM;
+	items_count++;
+	textcolor(YELLOW1, BLACK);
+}
+
+void moveitem() {
+	int x, y, dx, dy, nx, ny;
+	int newitems[WIDTH][HEIGHT] = { 0 };
+
+	if (items_count == 0)
+		return;
+
+	for (x = 0; x < WIDTH - 2; x++) {
+		for (y = 0; y < HEIGHT - 1; y++) {
+			if (items[x][y]) {
+				dx = rand() % 3 - 1; // -1, 0, 1
+				dy = 1;
+				nx = x + dx;
+				ny = y + dy;
+				if (nx == WIDTH - 5) nx = WIDTH - 6;
+				if (nx < 7) nx = 8;
+				if (ny < 1) ny = 1;
+				if (ny > HEIGHT - 3) {
+					gotoxy(x, y);
+					printf("     ");
+					items_count--;
+				}
+				else {
+					gotoxy(x, y);
+					printf("     "); // erase item
+					gotoxy(nx, ny);
+					int itemType = items[x][y];
+					switch (itemType) {
+					case LIFE_ITEM:
+						textcolor(RED2, BLACK);
+						printf(LifeItem);
+						break;
+					case TIME_ITEM:
+						textcolor(GREEN1, BLACK);
+						printf(TimeITEM);
+						break;
+					case GOD_ITEM:
+						textcolor(YELLOW1, BLACK);
+						printf(GodITEM);
+						break;
+					}
+					newitems[nx][ny] = itemType; // 이동된 아이템의 위치를 표시
+				}
+			}
+		}
+	}
+	memcpy(items, newitems, sizeof(newitems)); // 아이템 위치를 한 번에 업데이트
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 인트로 
+void playIntroSound() {
+	PlaySound(TEXT("intro.wav"), NULL, SND_FILENAME | SND_ASYNC);
+}
+
+// 보스 맞는 소리  
+void playBossSound() {
+	PlaySound(TEXT("hit.wav"), NULL, SND_FILENAME | SND_ASYNC);
+}
+// 총 쏘는 소리 
+void playGameSound() {
+	PlaySound(TEXT("shot.wav"), NULL, SND_FILENAME | SND_ASYNC);
+}
+
+// 첫번째 메인 음악
+void playBackgroundMusic() {
+	//PlaySound(TEXT("main.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+	PlaySound(TEXT("main.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+}
+
+// 두번째 메인 음악
+void playBackgroundMusic2() {
+	PlaySound(TEXT("main2.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);
+}
+
+// 다음 스테이지로 넘어가는 소리
+void playStageMusic() {
+	PlaySound(TEXT("go.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_ASYNC);
+}
 
 // 시간을 표시하는 함수
 void displayTime(int minutes, int seconds) {
@@ -520,6 +681,7 @@ void navigateMenu(int* selectedOption) {
 }
 
 void IntroPage() {  // 시작 인트로 화면
+	playIntroSound();
 	int i;
 	while (1) {
 
@@ -974,7 +1136,7 @@ int LoadingPage() {
 			printf("                                         ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★\n");
 
 
-
+			
 		}
 		else if (selectedOption == 3) {
 			printf("                                         ★★★★★★★★★★★★★   Loading  ★★★★★★★★★★★★★★★\n");
@@ -1733,15 +1895,25 @@ void introducePage() {
 	char key;
 	while (StartPage) {
 	
-
-
+		printf("\n");
+		printf("\n");
+		printf("\n");
 			printf("                                         ★★★★★★★★★★★★★★ 게임 룰 설명 ★★★★★★★★★★★★★★★★\n");
 			printf("                                         ★                                                                      ★\n");
 			printf("                                         ★                                                                      ★\n");
+			printf("                                         ★                    1인 Play (방향키, AWSD 이용)                      ★\n");
+			printf("                                         ★          1. 처음에 원하는 비행기 3개중 하나를 고른다.                ★\n");
+			printf("                                         ★          2. easy 모드와 hard 모드중에 하나를 고른다.                 ★\n");
+			printf("                                         ★          3. 총 스테이지는 4단계로 이루어져있다.                      ★\n");
+			printf("                                         ★          4. 1단계는 단순히 위에서 아래로 내려오는 적                 ★\n");
+			printf("                                         ★          5. 2단계는 좌우로 흔들리면서 아래로 내려오는 적             ★\n");
+			printf("                                         ★          6. 3단계는 좌우로 움직이며 총을 쏘는 적                     ★\n");
+			printf("                                         ★          7. 마지막은 보스 스테이지로 이루어져있다.                   ★\n");
+			printf("                                         ★          8. 클리어 조건은 각각 100,200 300, 보스HP 0 이다.           ★\n");
+			printf("                                         ★          9. 아이템은 총 3개로 목숨,시간,무적이다.                    ★\n");
+			printf("                                         ★          10. 기능은 목숨+1, 제한시간+30초, 5초간 무적                ★\n");
 			printf("                                         ★                                                                      ★\n");
-			printf("                                         ★                                                                      ★\n");
-			printf("                                         ★                                                                      ★\n");
-			printf("                                         ★                                                                      ★\n");
+			printf("                                         ★             게임 화면으로 돌아가려면 엔터를 누르시오!                ★\n");
 			printf("                                         ★                                                                      ★\n");
 			printf("                                         ★                                                                      ★\n");
 			printf("                                         ★                                                                      ★\n");
@@ -1779,6 +1951,25 @@ void init_game() {
 	removeCursor();
 }
 
+void easy_game() {
+	//나중에 게임이 종료되고 게임이 다시 시작될 때
+	//변수 값들을 초기화 해주는 영역
+
+	heart = 8;
+	BossLife = 50;
+	system("cls");  //게임이 시작되면 초기화면을 사라지게함
+	removeCursor();
+}
+
+void hard_game() {
+	//나중에 게임이 종료되고 게임이 다시 시작될 때
+	//변수 값들을 초기화 해주는 영역
+	heart = 5;
+	BossLife = 80;
+	system("cls");  //게임이 시작되면 초기화면을 사라지게함
+	removeCursor();
+}
+
 
 
 
@@ -1799,27 +1990,43 @@ void info() {
 		gotoxy(122, 10);
 		printf("목숨:");
 		textcolor(RED1, BLACK);
-		if (heart >= 4) {
-			heart = 4;
-			gotoxy(130, 10); printf("       ");
+		if (heart >= 8) {
+			
+			gotoxy(128, 10); printf("                ");
 
-			gotoxy(130, 10); printf("♥♥♥♥");
+			gotoxy(128, 10); printf("♥♥♥♥♥♥♥♥");
+		}
+		else if (heart == 7) {
+			gotoxy(128, 10); printf("                ");
+			gotoxy(128, 10); printf("♥♥♥♥♥♥♥");
+		}
+		else if (heart == 6) {
+			gotoxy(128, 10); printf("              ");
+			gotoxy(128, 10); printf("♥♥♥♥♥♥");
+		}
+		else if (heart == 5) {
+			gotoxy(128, 10); printf("            ");
+			gotoxy(128, 10); printf("♥♥♥♥♥");
+		}
+		else if (heart == 4) {
+			gotoxy(128, 10); printf("          ");
+			gotoxy(128, 10); printf("♥♥♥♥");
 		}
 		else if (heart == 3) {
-			gotoxy(130, 10); printf("       ");
-			gotoxy(130, 10); printf("♥♥♥");
+			gotoxy(128, 10); printf("        ");
+			gotoxy(128, 10); printf("♥♥♥");
 		}
 		else if (heart == 2) {
-			gotoxy(130, 10); printf("       ");
-			gotoxy(130, 10); printf("♥♥");
+			gotoxy(128, 10); printf("      ");
+			gotoxy(128, 10); printf("♥♥");
 		}
 		else if (heart == 1) {
-			gotoxy(130, 10); printf("       ");
-			gotoxy(130, 10); printf("♥");
+			gotoxy(128, 10); printf("    ");
+			gotoxy(128, 10); printf("♥");
 		}
 		else {
-			gotoxy(130, 10);
-			printf("  ");
+			gotoxy(128, 10);
+			printf("    ");
 		}
 
 		if (IsBoss) {
@@ -1828,27 +2035,43 @@ void info() {
 
 
 			textcolor(RED1, BLACK);
-			if (BossLife >= 40) {
+			if (BossLife >= 80) {
 
-				gotoxy(11, 2); printf("       ");
+				gotoxy(11, 2); printf("                ");
 
-				gotoxy(11, 2); printf("♥♥♥♥");
+				gotoxy(11, 2); printf("■■■■■■■■");
+			}
+			else if (BossLife == 70) {
+				gotoxy(11, 2); printf("                ");
+				gotoxy(11, 2); printf("■■■■■■■");
+			}
+			else if (BossLife == 60) {
+				gotoxy(11, 2); printf("              ");
+				gotoxy(11, 2); printf("■■■■■■");
+			}
+			else if (BossLife == 50) {
+				gotoxy(11, 2); printf("            ");
+				gotoxy(11, 2); printf("■■■■■");
+			}
+			else if (BossLife == 40) {
+				gotoxy(11, 2); printf("          ");
+				gotoxy(11, 2); printf("■■■■");
 			}
 			else if (BossLife == 30) {
-				gotoxy(11, 2); printf("       ");
-				gotoxy(11, 2); printf("♥♥♥");
+				gotoxy(11, 2); printf("        ");
+				gotoxy(11, 2); printf("■■■");
 			}
 			else if (BossLife == 20) {
-				gotoxy(11, 2); printf("       ");
-				gotoxy(11, 2); printf("♥♥");
+				gotoxy(11, 2); printf("      ");
+				gotoxy(11, 2); printf("■■");
 			}
 			else if (BossLife == 1) {
-				gotoxy(11, 2); printf("       ");
-				gotoxy(11, 2); printf("♥");
+				gotoxy(11, 2); printf("    ");
+				gotoxy(11, 2); printf("■");
 			}
 			else {
 				gotoxy(11, 2);
-				printf("  ");
+				printf("    ");
 				//게임 종료창 띄우게?
 			}
 
@@ -1886,6 +2109,12 @@ void info() {
 		}
 
 	}
+
+
+
+
+
+
 
 
 
@@ -1934,6 +2163,29 @@ void player1(unsigned char ch) {
 		oldx = newx; // 마지막 위치를 기억한다.
 		oldy = newy;
 
+		if (items[newx][newy]) {
+			int itemType = items[newx][newy];
+			switch (itemType) {
+			case LIFE_ITEM:
+				heart++;
+				if (heart >= 8) { heart = 8; }
+				break;
+			case TIME_ITEM:
+				remainingTime += 30; // 시간 아이템 효과: 제한 시간 30초 추가
+				break;
+			case GOD_ITEM:
+				//isInvincible = true; // 무적 아이템 효과: 5초 동안 무적
+
+
+				// 무적 상태를 유지하는 로직 구현
+				break;
+			}
+
+			items[newx][newy] = 0; // 아이템을 먹었으므로 해당 위치의 아이템을 제거
+			items_count--;
+		}
+		
+
 	}
 }
 //총알 그리기
@@ -1979,6 +2231,7 @@ bool CheckBulletBossCollision(int bulletIndex) {
 }
 
 void MoveBullet() {
+	
 	int i;
 
 	for (i = 0; i < MAXBULLET; i++) {
@@ -2038,32 +2291,96 @@ void CreateBasicEnemy(int count) {
 	}
 }
 
-// 적생성!!
+// 적생성!! // 보스레벨에 나올 적들
+void CreateBasicEnemy3(int count) {
+	int i, location, x, y;
+	location = rand() % 2;
+		x = 5 + rand() % 90;  //x 5 , y3
+	
+		y = 10 + rand() % 2;
+		
+
+
+	for (i = 0; i < MAXENEMY2 && Enemy2[i].exist == TRUE; i++) {}
+	if (i != MAXENEMY2) {
+		if (location == 1) {
+			Enemy2[i].x = x;
+			Enemy2[i].y = y;
+			Enemy2[i].move = 1;
+		}
+		else {
+			Enemy2[i].x = x;
+			Enemy2[i].y = y;
+			Enemy2[i].move = -1;
+		}
+		Enemy2[i].type = rand() % count;
+		Enemy2[i].exist = TRUE;
+	}
+}
+
+
+// 적생성!! // 보스레벨에 나올 적들
 void CreateBasicEnemy2(int count) {
 	int i, location, x, y;
 	location = rand() % 2;
 	x = 5 + rand() % 90;  //x 5 , y3
-	
-		y = 10 + rand() % 3;
-	
+
+	y = 10 + rand() % 2;
 
 
-	for (i = 0; i < MAXENEMY && Enemy[i].exist == TRUE; i++) {}
-	if (i != MAXENEMY) {
+
+	for (i = 0; i < MAXENEMY2 && Enemy2[i].exist == TRUE; i++) {}
+	if (i != MAXENEMY2) {
 		if (location == 1) {
-			Enemy[i].x = x;
-			Enemy[i].y = y;
-			Enemy[i].move = 1;
+			Enemy2[i].x = x;
+			Enemy2[i].y = y;
+			Enemy2[i].move = 1;
 		}
 		else {
-			Enemy[i].x = x;
-			Enemy[i].y = y;
-			Enemy[i].move = -1;
+			Enemy2[i].x = x;
+			Enemy2[i].y = y;
+			Enemy2[i].move = -1;
 		}
-		Enemy[i].type = rand() % count;
-		Enemy[i].exist = TRUE;
+		Enemy2[i].type = rand() % count;
+		Enemy2[i].exist = TRUE;
 	}
 }
+//보스 적움직임 
+void MoveEnemy10() {
+	int i;
+	for (i = 0; i < MAXENEMY2; i++) {
+		if (Enemy2[i].exist == TRUE) {
+			if (Enemy2[i].type == -1) {
+				gotoxy(Enemy2[i].x - 1, Enemy2[i].y);
+				printf("          ");
+				Enemy2[i].exist = FALSE;
+				continue;
+			}
+			if (Enemy2[i].x > WIDTH - 40) {
+				Enemy2[i].x -= 1;
+				Enemy2[i].move = -1;
+
+
+			}
+			else if (Enemy2[i].x <= 3) {
+
+				Enemy2[i].move = 1;
+				Enemy2[i].x += 1;
+				gotoxy(Enemy2[i].x, Enemy2[i].y);
+				printf(" ");
+			}
+			else {
+				Enemy2[i].x += Enemy2[i].move;
+				gotoxy(Enemy2[i].x, Enemy2[i].y);
+				textcolor(GRAY1, BLACK);
+				printf(EnemyType[Enemy2[i].type]);
+				printf(" ");
+			}
+		}
+	}
+}
+
+
 
 //적움직임 
 void MoveEnemy() {
@@ -2142,11 +2459,12 @@ void MoveEnemy3() {
 			}
 
 			gotoxy(Enemy[i].x, Enemy[i].y);
-			printf("      "); // 현재 위치의 적 삭제
+			printf("          "); // 현재 위치의 적 삭제
 
 			// 좌우로 움직이기 위한 랜덤값 생성
 			int moveDirection = rand() % 3; // 0, 1, 2 중 하나의 값을 랜덤으로 생성
-
+			gotoxy(Enemy[i].x, Enemy[i].y);
+			printf("          "); // 이전 위치의 적 삭제
 			switch (moveDirection) {
 			case 0:
 				Enemy[i].x -= 1; // 왼쪽으로 이동
@@ -2209,6 +2527,28 @@ void MoveBoss() {
 	}
 }
 
+
+//적총알
+void EnemyBulletshow3() {
+	if (PickMyLevel == 1) {
+		textcolor(GREEN1, BLACK);
+		gotoxy(0, 0); printf("■■■■");
+	}
+	if (PickMyLevel == 2) {
+		textcolor(RED1, BLACK);
+		gotoxy(0, 0); printf("■■■■");
+	}
+
+	int j;
+	int random = rand() % MAXENEMY;
+	for (j = 0; j < MAXENEMYBULLET && EnemyBullet[j].exist == TRUE; j++) {}
+	if (j != MAXENEMYBULLET && Enemy2[random].exist == TRUE) {
+		EnemyBullet[j].x = Enemy2[random].x + 2;
+		EnemyBullet[j].y = Enemy2[random].y + 1;
+		EnemyBullet[j].exist = TRUE;
+	}
+}
+
 //적총알
 void EnemyBulletshow() {
 	if (PickMyLevel == 1) {
@@ -2229,7 +2569,7 @@ void EnemyBulletshow() {
 		EnemyBullet[j].exist = TRUE;
 	}
 }
-void BossBulletshow() {
+void BossBulletshow15() {
 	if (PickMyLevel == 1) {
 		textcolor(GREEN1, BLACK);
 		gotoxy(0, 0); printf("■");
@@ -2249,6 +2589,34 @@ void BossBulletshow() {
 	}
 }
 
+void BossBulletshow() {
+	static int bulletDelay = 0;  // 추가
+	const int bulletDelayThreshold = 3;  // 추가
+
+	if (PickMyLevel == 1) {
+		textcolor(GREEN1, BLACK);
+		gotoxy(0, 0);
+		printf("■");
+	}
+	if (PickMyLevel == 2) {
+		textcolor(RED1, BLACK);
+		gotoxy(0, 0);
+		printf("■");
+	}
+
+	int j;
+	int random = rand() % MAXENEMY;
+	for (j = 0; j < MAXENEMYBULLET && EnemyBullet[j].exist == TRUE; j++) {}
+	if (j != MAXENEMYBULLET && bulletDelay >= bulletDelayThreshold) {  // 수정
+		EnemyBullet[j].x = Boss.x + 6;
+		EnemyBullet[j].y = Boss.y + 7;
+		EnemyBullet[j].exist = TRUE;
+		bulletDelay = 0;  // 추가
+	}
+
+	bulletDelay++;  // 추가
+}
+
 
 //총알 그리기
 void EnemyBulletdraw(int i) {
@@ -2259,6 +2627,19 @@ void EnemyBulletdraw(int i) {
 
 // 적총알 지우기
 void EnemyBulleterase(int i) {
+	gotoxy(EnemyBullet[i].x, EnemyBullet[i].y);
+	printf("  ");
+}
+
+//총알 그리기
+void EnemyBulletdraw2(int i) {
+	textcolor(GREEN1, BLACK);
+	gotoxy(EnemyBullet[i].x, EnemyBullet[i].y);
+	printf("★");
+}
+
+// 적총알 지우기
+void EnemyBulleterase2(int i) {
 	gotoxy(EnemyBullet[i].x, EnemyBullet[i].y);
 	printf("  ");
 }
@@ -2289,6 +2670,61 @@ void EnemyBulletMove() {
 }
 
 
+// 적총알 움직임
+void EnemyBulletMove3() {
+	for (int i = 0; i < MAXENEMYBULLET; i++) {
+		if (EnemyBullet[i].exist == TRUE) {
+			EnemyBulleterase(i);
+			if (EnemyBullet[i].y >= HEIGHT - 4) {
+				EnemyBullet[i].exist = FALSE;
+			}
+			else {
+				EnemyBullet[i].y++;
+				EnemyBulletdraw(i);
+			}
+		}
+	}
+
+	// 적 총알이 화면 밖으로 나가면 지우기
+	for (int i = 0; i < MAXENEMYBULLET; i++) {
+		if (EnemyBullet[i].exist == FALSE) {
+			EnemyBulleterase(i);
+		}
+	}
+
+
+}
+
+void EnemyBulletMove17() {
+	for (int i = 0; i < MAXENEMYBULLET2; i++) {
+		if (EnemyBullet2[i].exist) {
+			EnemyBulleterase2(i);
+			if (EnemyBullet2[i].y >= HEIGHT - 4) {
+				EnemyBullet2[i].exist = FALSE;
+			}
+			else {
+				EnemyBullet2[i].y++;
+				EnemyBulletdraw2(i);
+			}
+		}
+	}
+
+	// 적 총알이 화면 밖으로 나가면 지우기
+	for (int i = 0; i < MAXENEMYBULLET2; i++) {
+		if (!EnemyBullet2[i].exist) {
+			EnemyBulleterase2(i);
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
 
 
 // 내가 적 총알에 맞았을 때
@@ -2297,7 +2733,7 @@ void playerTouch() {
 	for (i = 0; i < MAXENEMYBULLET; i++) {
 		if (EnemyBullet[i].exist == FALSE)
 			continue;
-		if (EnemyBullet[i].y == newy && abs(EnemyBullet[i].x - newx) <= 3) {
+		if (EnemyBullet[i].y == newy && abs(EnemyBullet[i].x - newx) <= 2) {
 			EnemyBullet[i].exist = FALSE;
 			gotoxy(EnemyBullet[i].x, EnemyBullet[i].y);
 			printf("    ");
@@ -2310,6 +2746,28 @@ void playerTouch() {
 		}
 	}
 	
+
+}
+
+// 내가 적 총알에 맞았을 때
+void playerTouch3() {
+	int i;
+	for (i = 0; i < MAXENEMYBULLET; i++) {
+		if (EnemyBullet[i].exist == FALSE)
+			continue;
+		if (EnemyBullet[i].y == newy && abs(EnemyBullet[i].x - newx) <= 3) {
+			EnemyBullet[i].exist = FALSE;
+			gotoxy(EnemyBullet[i].x, EnemyBullet[i].y);
+			printf("    ");
+			heart--;
+			Zet10(newx, newy);
+			Sleep(20);
+
+
+			info();
+		}
+	}
+
 
 }
 
@@ -2336,12 +2794,12 @@ void EnemyTouch() {
 
 
 // 적이 내 총알에 맞았을 때 상황 구현하기
-void DeleteEnemy() {
+void DeleteEnemy2() {
 	int i;
 	for (i = 0; i < MAXENEMY; i++) {
 		if (Enemy[i].exist == FALSE || Enemy[i].type == -1)
 			continue;
-		if (Enemy[i].y == Bullet[i].y && abs(Enemy[i].x - Bullet[i].x) <= 15) {
+		if (Enemy[i].y == Bullet[i].y && abs(Enemy[i].x - Bullet[i].x) <= 8) {
 			gotoxy(Bullet[i].x, Bullet[i].y);
 			printf("   ");
 			Bullet[i].exist = FALSE;
@@ -2358,6 +2816,86 @@ void DeleteEnemy() {
 	}
 	
 }
+
+void DeleteEnemy3() {
+	int i;
+	for (i = 0; i < MAXENEMY; i++) {
+		if (Enemy[i].exist == FALSE || Enemy[i].type == -1)
+			continue;
+		if (Enemy[i].y == Bullet[i].y && abs(Enemy[i].x - Bullet[i].x) <= 8) {
+			gotoxy(Bullet[i].x, Bullet[i].y);
+			printf("   ");
+			Bullet[i].exist = FALSE;
+			Enemy[i].type = -1;
+
+			// y 값의 범위가 4 이내로 들어오면 죽임
+			if (abs(Enemy[i].y - Bullet[i].y) <= 4) {
+				gotoxy(Enemy[i].x + 2, Bullet[i].y);
+				textcolor(BLUE2, BLACK);
+				printf("★+20");
+				Sleep(20);
+				printf("  ");
+				score += 20;
+			}
+
+			info();
+			break;
+		}
+	}
+}
+
+
+void DeleteEnemy() {
+	int i;
+	for (i = 0; i < MAXENEMY; i++) {
+		if (Enemy[i].exist == FALSE || Enemy[i].type == -1)
+			continue;
+		if (abs(Enemy[i].y - Bullet[i].y) <= 2 && abs(Enemy[i].x - Bullet[i].x) <= 12) {
+			gotoxy(Bullet[i].x, Bullet[i].y);
+			printf("   ");
+			Bullet[i].exist = FALSE;
+			Enemy[i].type = -1;
+
+			gotoxy(Enemy[i].x + 2, Bullet[i].y);
+			textcolor(BLUE2, BLACK);
+			printf("★+20");
+			Sleep(30);
+			gotoxy(Enemy[i].x + 2, Bullet[i].y);
+			printf("     "); // 출력된 영역을 공백으로 지움
+			score += 20;
+
+			info();
+			break;
+		}
+	}
+}
+
+void DeleteEnemy10() {
+	int i;
+	for (i = 0; i < MAXENEMY; i++) {
+		if (Enemy2[i].exist == FALSE || Enemy2[i].type == -1)
+			continue;
+		if (abs(Enemy2[i].y - Bullet[i].y) <= 2 && abs(Enemy2[i].x - Bullet[i].x) <= 12) {
+			gotoxy(Bullet[i].x, Bullet[i].y);
+			printf("   ");
+			Bullet[i].exist = FALSE;
+			Enemy2[i].type = -1;
+
+			gotoxy(Enemy2[i].x + 2, Bullet[i].y);
+			textcolor(BLUE2, BLACK);
+			printf("★+20");
+			Sleep(30);
+			gotoxy(Enemy2[i].x + 2, Bullet[i].y);
+			printf("     "); // 출력된 영역을 공백으로 지움
+			score += 20;
+
+			info();
+			break;
+		}
+	}
+}
+
+
 
 // 보스가 내 총알에 맞았을 때 상황 구현하기
 void DeleteBoss() {
@@ -2398,8 +2936,10 @@ void GameMap() {
 
 	// 맵 출력  // 난이도에 따라 색깔을 바꾸자!!!!@@@@@@@@@@@@@@@@@
 
-	
+	// 쉬운 버젼
 	if (PickMyLevel == 1) {
+		//난이도 조절해주기
+		
 		textcolor(GREEN1, BLACK);
 	}
 	//난이도가 hard 라면
@@ -2420,7 +2960,22 @@ void GameMap() {
 
 }
 
+void spawnItem() {
+	time(NULL);
+	int itemType = rand() % 3;  // 0, 1, 2 중 하나의 값을 랜덤으로 선택
 
+	switch (itemType) {
+	case 0:
+		showLifeItem();
+		break;
+	case 1:
+		showTimeItem();
+		break;
+	case 2:
+		showGodItem();
+		break;
+	}
+}
 
 
 
@@ -2472,6 +3027,7 @@ void Level1gamestart() {
 						Bullet[i].y = newy - 1;
 						Bullet[i].exist = TRUE;
 					}
+					//playGameSound();
 				}
 			}
 			else {
@@ -2574,6 +3130,7 @@ void Level2gamestart() {
 					Bullet[i].y = newy - 1;
 					Bullet[i].exist = TRUE;
 				}
+				//playGameSound();
 			}
 		}
 		else {
@@ -2669,7 +3226,9 @@ void Level3gamestart() {
 				}
 			}
 			if (ch == SPACE) {
+				//playGameSound();
 				for (i = 0; i < MAXBULLET && Bullet[i].exist == TRUE; i++) {
+					
 					//DrawBullet(i); // 수정: 총알을 화면에 그림
 				}
 				if (i != MAXBULLET) {
@@ -2677,6 +3236,7 @@ void Level3gamestart() {
 					Bullet[i].y = newy - 1;
 					Bullet[i].exist = TRUE;
 				}
+				
 			}
 		}
 		else {
@@ -2684,7 +3244,7 @@ void Level3gamestart() {
 		}
 
 		// 점수가 200 보다 크면 다음 단계로 넘어가기 위해서 막아놓기
-		if (score < 360) {
+		if (score < 300) {
 			//총알 속도조절 함수
 			MoveBullet();
 
@@ -2716,7 +3276,7 @@ void Level3gamestart() {
 		}
 
 		// 3단계로 넘어가기 
-		if (score >= 360) {
+		if (score >= 300) {
 
 			Level3ClearMessage(60, 10); // 레벨 2단계 클리어 메시지 남기기
 			break;
@@ -2739,7 +3299,7 @@ void Bossgamestart() {
 	cls(WHITE, BLACK);
 	textcolor(GREEN1, BLACK);
 	Boss.x = 60;
-	Boss.y = 3;
+	Boss.y = 2;
 	gotoxy(60, 17);
 
 	printf("보스가 곧 출현해요!!!!!!!!!!!!!!!");
@@ -2766,6 +3326,7 @@ void Bossgamestart() {
 	// 적 관련 변수 선언
 	int enemySpawnTimer = 0;
 	int enemySpawnInterval = 5;  // 적 생성 간격 조절
+	int itemSpawnInterval = 50;
 	while (1) {
 		if (kbhit() == 1) {
 			ch = getch();
@@ -2783,6 +3344,7 @@ void Bossgamestart() {
 				}
 			}
 			if (ch == SPACE) {
+				//playGameSound();
 				for (i = 0; i < MAXBULLET && Bullet[i].exist == TRUE; i++) {
 					//DrawBullet(i); // 수정: 총알을 화면에 그림
 				}
@@ -2791,6 +3353,7 @@ void Bossgamestart() {
 					Bullet[i].y = newy - 1;
 					Bullet[i].exist = TRUE;
 				}
+				
 			}
 		}
 		else {
@@ -2832,25 +3395,32 @@ void Bossgamestart() {
 			}
 
 			//// 적 움직임 3단계로 처리 하자!
-			MoveEnemy();
+			MoveEnemy10();
 
 			//
 
 			//// 적 총알 생성 및 움직임 처리
+			EnemyBulletshow3(); // 적 총알 좌표 설정
+
+			EnemyBulletMove3(); // 적 총알 그리고 지우기 
+
+			if (frame_count % itemSpawnInterval == 0) {
+				spawnItem();
+			}
+
+
+			moveitem(); // 아이템 이동
+			
 			
 
-			EnemyBulletshow(); // 적 총알 좌표 설정
-
-			EnemyBulletMove(); // 적 총알 그리고 지우기 
-
 			BossBulletshow(); // 보스 총알 좌표 설정
-
+			//EnemyBulletMove17();
 			//BossBulletMove(); // 보스 총알 그리고 지우기 
 			//// 적 총알에 맞았을 때 처리
 			playerTouch();
 
 
-			DeleteEnemy();// 적이 내 총알에 맞아 죽는 것을 처리
+			DeleteEnemy10();// 적이 내 총알에 맞아 죽는 것을 처리
 			EnemyTouch(); // 적과 내가 만났을 때  생명력 -1 
 		}
 
@@ -2870,8 +3440,8 @@ void Bossgamestart() {
 		displayTime(minutes, seconds);
 
 		// 제한시간이 지나면 
-		if (remainingSeconds <= 0) {
-			BossFailMessage(60, 10); // 보스단계 클리어 메시지!!
+		if (remainingSeconds <= 0 || heart <= 0) {
+			BossFailMessage(60, 10); // 보스단계 실패 메시지!!
 			IsFail = TRUE;
 			break;
 		}
@@ -2916,29 +3486,40 @@ void main()
 	IntroPage();
 
 	
-		
+	
 	while (isFinish == false) {
 		if (isGameRunning) {// 게임 실행 중인 경우
-			
 		
-			//pickMyJet(); // 비행기를 고른다!!
-			//
-			//pickGameLevel();// 난이도 조절 화면 
-			//LoadingPage();// 로딩 화면 !!
+		
+			pickMyJet(); // 비행기를 고른다!!
+			
+			pickGameLevel();// 난이도 조절 화면 
 
-			//IsLevel1 = true; // 1단계
-			//Level1gamestart(); // 1단계 게임 시작!!
-			//IsLevel1 = false; // 1단계
+			if (PickMyLevel == 1) {
+				easy_game(); // 이지 게임 설정 초기화 해주기
+			}
+			//난이도가 hard 라면
+			if (PickMyLevel == 2) {
+				hard_game(); // 하드 게임 설정 초기화 해주기
+			}
+			playStageMusic();
 
-			//Level2LoadingPage();	// 2단계 로딩 페이지 
-			//IsLevel2 = true; // 2단계
-			//Level2gamestart();      // 2단계 게임 시작
-			//IsLevel2 = false; // 2단계
-			//Level3LoadingPage();	// 3단계 로딩 페이지 
-			//IsLevel3 = true; // 3단계
-			//Level3gamestart();      // 3단계 게임 시작
-			//IsLevel3 = false; // 3단계
-			//BossLoadingPage(); // 보스로 가는 로딩 페이지
+			LoadingPage();// 로딩 화면 !!
+			
+			IsLevel1 = true; // 1단계
+			playBackgroundMusic();
+			Level1gamestart(); // 1단계 게임 시작!!
+			IsLevel1 = false; // 1단계
+
+			Level2LoadingPage();	// 2단계 로딩 페이지 
+			IsLevel2 = true; // 2단계
+			Level2gamestart();      // 2단계 게임 시작
+			IsLevel2 = false; // 2단계
+			Level3LoadingPage();	// 3단계 로딩 페이지 
+			IsLevel3 = true; // 3단계
+			Level3gamestart();      // 3단계 게임 시작
+			IsLevel3 = false; // 3단계
+			BossLoadingPage(); // 보스로 가는 로딩 페이지
 			IsBoss = true;
 			cls(WHITE, BLACK);
 			Bossgamestart(); // 보스 단계 게임 시작!!
@@ -2946,7 +3527,8 @@ void main()
 
 			// 게임 실패 했을 때
 			if(IsFail){
-				
+				PlaySound(NULL, NULL, SND_FILENAME);
+
 				if (FailPage() == 2) {
 					//isGameRunning = false;
 					isFinish = TRUE;
@@ -2967,15 +3549,17 @@ void main()
 			}
 
 		
-		
+			score = 0;
 			
 		}
 		else {
 			// 게임 실행 중이 아닌 경우
 			
 			// 메뉴 선택에 따라 다른 화면으로 이동하도록 처리
+			playBackgroundMusic2();
 			switch (MenuPage()) {
 			case 1:
+
 				isGameRunning = true;  // 첫 번째 게임 화면으로 이동
 				break;
 			case 2:
@@ -2989,12 +3573,5 @@ void main()
 			}
 		}
 	}
-
-	
-	
-
-
-
-
 }
 
