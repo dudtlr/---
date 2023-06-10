@@ -2035,42 +2035,64 @@ void info() {
 
 
 			textcolor(RED1, BLACK);
-			if (BossLife >= 80) {
 
-				gotoxy(11, 2); printf("                ");
-
-				gotoxy(11, 2); printf("■■■■■■■■");
-			}
-			else if (BossLife == 70) {
-				gotoxy(11, 2); printf("                ");
-				gotoxy(11, 2); printf("■■■■■■■");
-			}
-			else if (BossLife == 60) {
-				gotoxy(11, 2); printf("              ");
-				gotoxy(11, 2); printf("■■■■■■");
-			}
-			else if (BossLife == 50) {
-				gotoxy(11, 2); printf("            ");
-				gotoxy(11, 2); printf("■■■■■");
-			}
-			else if (BossLife == 40) {
-				gotoxy(11, 2); printf("          ");
-				gotoxy(11, 2); printf("■■■■");
+			/*if (BossLife >= 40) {
+				BossLife = 4;
+				gotoxy(20, 48); printf("       ");
+				gotoxy(20, 48); printf("♥♥♥♥");
 			}
 			else if (BossLife == 30) {
-				gotoxy(11, 2); printf("        ");
-				gotoxy(11, 2); printf("■■■");
+				gotoxy(20, 48); printf("       ");
+				gotoxy(20, 48); printf("♥♥♥");
 			}
 			else if (BossLife == 20) {
-				gotoxy(11, 2); printf("      ");
-				gotoxy(11, 2); printf("■■");
+				gotoxy(20, 48); printf("       ");
+				gotoxy(20, 48); printf("♥♥");
 			}
-			else if (BossLife == 1) {
-				gotoxy(11, 2); printf("    ");
-				gotoxy(11, 2); printf("■");
+			else if (BossLife == 10) {
+				gotoxy(20, 48); printf("       ");
+				gotoxy(20, 48); printf("♥");
 			}
 			else {
-				gotoxy(11, 2);
+				gotoxy(20, 48);
+				printf("  ");
+			}*/
+			if (BossLife >= 80) {
+
+				gotoxy(13, 2); printf("                ");
+
+				gotoxy(13, 2); printf("■■■■■■■■");
+			}
+			else if (BossLife == 70) {
+				gotoxy(13, 2); printf("                ");
+				gotoxy(13, 2); printf("■■■■■■■");
+			}
+			else if (BossLife == 60) {
+				gotoxy(13, 2); printf("                ");
+				gotoxy(13, 2); printf("■■■■■■");
+			}
+			else if (BossLife == 50) {
+				gotoxy(13, 2); printf("                ");
+				gotoxy(13, 2); printf("■■■■■");
+			}
+			else if (BossLife == 40) {
+				gotoxy(13, 2); printf("                ");
+				gotoxy(13, 2); printf("■■■■");
+			}
+			else if (BossLife == 30) {
+				gotoxy(13, 2); printf("                ");
+				gotoxy(13, 2); printf("■■■");
+			}
+			else if (BossLife == 20) {
+				gotoxy(13, 2); printf("                ");
+				gotoxy(13, 2); printf("■■");
+			}
+			else if (BossLife == 10) {
+				gotoxy(13, 2); printf("                ");
+				gotoxy(13, 2); printf("■");
+			}
+			else {
+				gotoxy(13, 2);
 				printf("    ");
 				//게임 종료창 띄우게?
 			}
@@ -3491,9 +3513,9 @@ void main()
 		if (isGameRunning) {// 게임 실행 중인 경우
 		
 		
-			pickMyJet(); // 비행기를 고른다!!
-			
-			pickGameLevel();// 난이도 조절 화면 
+			//pickMyJet(); // 비행기를 고른다!!
+			//
+			//pickGameLevel();// 난이도 조절 화면 
 
 			if (PickMyLevel == 1) {
 				easy_game(); // 이지 게임 설정 초기화 해주기
@@ -3502,24 +3524,24 @@ void main()
 			if (PickMyLevel == 2) {
 				hard_game(); // 하드 게임 설정 초기화 해주기
 			}
-			playStageMusic();
+			//playStageMusic();
 
-			LoadingPage();// 로딩 화면 !!
-			
-			IsLevel1 = true; // 1단계
-			playBackgroundMusic();
-			Level1gamestart(); // 1단계 게임 시작!!
-			IsLevel1 = false; // 1단계
+			//LoadingPage();// 로딩 화면 !!
+			//
+			//IsLevel1 = true; // 1단계
+			//playBackgroundMusic();
+			//Level1gamestart(); // 1단계 게임 시작!!
+			//IsLevel1 = false; // 1단계
 
-			Level2LoadingPage();	// 2단계 로딩 페이지 
-			IsLevel2 = true; // 2단계
-			Level2gamestart();      // 2단계 게임 시작
-			IsLevel2 = false; // 2단계
-			Level3LoadingPage();	// 3단계 로딩 페이지 
-			IsLevel3 = true; // 3단계
-			Level3gamestart();      // 3단계 게임 시작
-			IsLevel3 = false; // 3단계
-			BossLoadingPage(); // 보스로 가는 로딩 페이지
+			//Level2LoadingPage();	// 2단계 로딩 페이지 
+			//IsLevel2 = true; // 2단계
+			//Level2gamestart();      // 2단계 게임 시작
+			//IsLevel2 = false; // 2단계
+			//Level3LoadingPage();	// 3단계 로딩 페이지 
+			//IsLevel3 = true; // 3단계
+			//Level3gamestart();      // 3단계 게임 시작
+			//IsLevel3 = false; // 3단계
+			//BossLoadingPage(); // 보스로 가는 로딩 페이지
 			IsBoss = true;
 			cls(WHITE, BLACK);
 			Bossgamestart(); // 보스 단계 게임 시작!!
